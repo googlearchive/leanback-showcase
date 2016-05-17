@@ -21,17 +21,13 @@ If you use Android Studio as recommended, the following dependencies will **auto
 - Clone this repo:
 
 ```sh
-git clone https://github.com/googlesamples/androidtv-Leanback.git
+git clone https://github.com/googlesamples/leanback-showcase.git
 ```
 
 - Open the project in [Android Studio][studio].
-- Compile and deploy to your Android TV device (such as a Nexus Player).
+- Compile and deploy to your Android TV emulator or device (such as a Nexus Player).
 
 Need more information about getting started with Android TV? Check the [official docs][getting-started].
-
-## Screenshots
-
-[![Screenshot](screenshots/atv-leanback-all.png)](https://raw.githubusercontent.com/googlesamples/androidtv-Leanback/master/screenshots/atv-leanback-all.png)
 
 ## Support
 
