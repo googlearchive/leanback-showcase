@@ -63,10 +63,6 @@
             android:name=".app.media.VideoExampleActivity"
             android:exported="true"
             android:theme="@style/Theme.Example.Leanback"></activity>
-        <activity
-            android:name=".app.media.MusicExampleActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Example.LeanbackMusic"></activity>
     </application>
 
 </manifest>

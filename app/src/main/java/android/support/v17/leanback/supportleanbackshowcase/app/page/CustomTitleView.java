@@ -17,25 +17,27 @@ package android.support.v17.leanback.supportleanbackshowcase.app.page;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.v17.leanback.supportleanbackshowcase.R;
+import android.support.v17.leanback.widget.SearchOrbView;
 import android.support.v17.leanback.widget.TitleViewAdapter;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.ImageView;
 
 /**
  * Custom title view to be used in {@link android.support.v17.leanback.app.BrowseFragment}.
  */
 public class CustomTitleView extends RelativeLayout implements TitleViewAdapter.Provider {
     private final TextView mTitleView;
-    private final ImageView mBadgeView;
+    private final View mAnalogClockView;
+    private final View mSearchOrbView;
 
     private final TitleViewAdapter mTitleViewAdapter = new TitleViewAdapter() {
         @Override
         public View getSearchAffordanceView() {
-            return null;
+            return mSearchOrbView;
         }
 
         @Override
@@ -45,7 +47,31 @@ public class CustomTitleView extends RelativeLayout implements TitleViewAdapter.
 
         @Override
         public void setBadgeDrawable(Drawable drawable) {
-            CustomTitleView.this.setBadgeDrawable(drawable);
+            //CustomTitleView.this.setBadgeDrawable(drawable);
+        }
+
+        @Override
+        public void updateComponentsVisibility(int flags) {
+            /*if ((flags & BRANDING_VIEW_VISIBLE) == BRANDING_VIEW_VISIBLE) {
+                updateBadgeVisibility(true);
+            } else {
+                mAnalogClockView.setVisibility(View.GONE);
+                mTitleView.setVisibility(View.GONE);
+            }*/
+
+            int visibility = (flags & SEARCH_VIEW_VISIBLE) == SEARCH_VIEW_VISIBLE
+                    ? View.VISIBLE : View.INVISIBLE;
+            mSearchOrbView.setVisibility(visibility);
+        }
+
+        private void updateBadgeVisibility(boolean visible) {
+            if (visible) {
+                mAnalogClockView.setVisibility(View.VISIBLE);
+                mTitleView.setVisibility(View.VISIBLE);
+            } else {
+                mAnalogClockView.setVisibility(View.GONE);
+                mTitleView.setVisibility(View.GONE);
+            }
         }
     };
 
@@ -61,14 +87,15 @@ public class CustomTitleView extends RelativeLayout implements TitleViewAdapter.
         super(context, attrs, defStyle);
         View root  = LayoutInflater.from(context).inflate(R.layout.custom_titleview, this);
         mTitleView = (TextView) root.findViewById(R.id.title_tv);
-        mBadgeView = (ImageView)root.findViewById(R.id.title_badge_iv);
+        mAnalogClockView = root.findViewById(R.id.clock);
+        mSearchOrbView = root.findViewById(R.id.search_orb);
     }
 
     public void setTitle(CharSequence title) {
         if (title != null) {
             mTitleView.setText(title);
             mTitleView.setVisibility(View.VISIBLE);
-            mBadgeView.setVisibility(View.GONE);
+            mAnalogClockView.setVisibility(View.VISIBLE);
         }
     }
 
@@ -76,8 +103,7 @@ public class CustomTitleView extends RelativeLayout implements TitleViewAdapter.
     public void setBadgeDrawable(Drawable drawable) {
         if (drawable != null) {
             mTitleView.setVisibility(View.GONE);
-            mBadgeView.setImageDrawable(drawable);
-            mBadgeView.setVisibility(View.VISIBLE);
+            mAnalogClockView.setVisibility(View.VISIBLE);
         }
     }
 
