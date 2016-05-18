@@ -1,6 +1,17 @@
 # Leanback Support Library Showcase App for Android TV
 
-This sample app showcases different components that comes with Leanback library.
+This sample app showcases different components that come with Leanback library.
+
+The home screen in this sample app is a BrowseFragment consisting of a set of different cards.
+Each card represents a component in Leanback.
+
+All the cards in this sample app work except the Settings.
+Settings for now crashes due to some internal issue, and we are working on
+resolving that in the next few days.
+
+We will also add a new music example card soon.
+This will be a new PlaybackOverlayFragment that comes with a set of new
+features.
 
 ## Introduction
 
@@ -24,8 +35,10 @@ If you use Android Studio as recommended, the following dependencies will **auto
 git clone https://github.com/googlesamples/leanback-showcase.git
 ```
 
+- In the local.properties file add the location to your Android SDK (You need to install Android SDK 'N').
 - Open the project in [Android Studio][studio].
 - Compile and deploy to your Android TV emulator or device (such as a Nexus Player).
+
 
 ## Screenshots
 
