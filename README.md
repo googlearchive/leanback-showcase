@@ -29,7 +29,7 @@ git clone https://github.com/googlesamples/leanback-showcase.git
 
 ## Screenshots
 
-[![Screenshot](screenshots/Showcase-Snapshots.png)]
+![Screenshot](screenshots/Showcase-Snapshots.png)
 
 Need more information about getting started with Android TV? Check the [official docs][getting-started].
 
