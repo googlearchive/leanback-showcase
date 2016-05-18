@@ -27,6 +27,10 @@ git clone https://github.com/googlesamples/leanback-showcase.git
 - Open the project in [Android Studio][studio].
 - Compile and deploy to your Android TV emulator or device (such as a Nexus Player).
 
+## Screenshots
+
+[![Screenshot](screenshots/Showcase-Snapshots.png)]
+
 Need more information about getting started with Android TV? Check the [official docs][getting-started].
 
 ## Support
