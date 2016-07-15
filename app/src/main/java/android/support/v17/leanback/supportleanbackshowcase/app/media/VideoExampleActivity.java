@@ -16,8 +16,11 @@ package android.support.v17.leanback.supportleanbackshowcase.app.media;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v17.leanback.supportleanbackshowcase.R;
+import android.support.v4.os.BuildCompat;
 
 /**
  * TODO: Javadoc
@@ -38,6 +41,12 @@ public class VideoExampleActivity extends Activity {
         FragmentTransaction ft2 = getFragmentManager().beginTransaction();
         ft2.add(R.id.videoFragment, new VideoConsumptionExampleFragment(), VideoConsumptionExampleFragment.TAG);
         ft2.commit();
+    }
+
+    public static boolean supportsPictureInPicture(Context context) {
+        return BuildCompat.isAtLeastN() &&
+                context.getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_PICTURE_IN_PICTURE);
     }
 
 }

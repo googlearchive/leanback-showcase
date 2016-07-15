@@ -88,6 +88,21 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
     }
 
     @Override
+    public void onPause() {
+        if (mGlue.isMediaPlaying()) {
+            boolean isVisibleBehind = getActivity().requestVisibleBehind(true);
+            boolean isPictureInPictureMode = VideoExampleActivity.supportsPictureInPicture(
+                    getContext()) && getActivity().isInPictureInPictureMode();
+            if (!isVisibleBehind && !isPictureInPictureMode) {
+                mGlue.pausePlayback();
+            }
+        } else {
+            getActivity().requestVisibleBehind(false);
+        }
+        super.onPause();
+    }
+
+    @Override
     public void onStop() {
         super.onStop();
         mGlue.enableProgressUpdating(false);

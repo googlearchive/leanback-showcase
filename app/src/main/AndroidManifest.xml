@@ -62,7 +62,12 @@
         <activity
             android:name=".app.media.VideoExampleActivity"
             android:exported="true"
-            android:theme="@style/Theme.Example.Leanback"></activity>
+            android:theme="@style/Theme.Example.Leanback"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"
+            ></activity>
     </application>
 
 </manifest>

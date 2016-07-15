@@ -15,6 +15,7 @@
 
 package android.support.v17.leanback.supportleanbackshowcase.app.media;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v17.leanback.app.PlaybackOverlayFragment;
@@ -27,12 +28,14 @@ import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
 public abstract class VideoMediaPlayerGlue extends MediaPlayerGlue {
 
     private final PlaybackControlsRow.ClosedCaptioningAction mClosedCaptioningAction;
+    private final PlaybackControlsRow.PictureInPictureAction mPipAction;
 
     public VideoMediaPlayerGlue(Context context, PlaybackOverlayFragment fragment) {
         super(context, fragment);
 
         // Instantiate secondary actions
         mClosedCaptioningAction = new PlaybackControlsRow.ClosedCaptioningAction(context);
+        mPipAction = new PlaybackControlsRow.PictureInPictureAction(context);
         setFadingEnabled(true);
     }
 
@@ -40,12 +43,17 @@ public abstract class VideoMediaPlayerGlue extends MediaPlayerGlue {
         secondaryActionsAdapter.add(mClosedCaptioningAction);
         secondaryActionsAdapter.add(mThumbsDownAction);
         secondaryActionsAdapter.add(mThumbsUpAction);
+        if (VideoExampleActivity.supportsPictureInPicture(getContext())) {
+            secondaryActionsAdapter.add(mPipAction);
+        }
     }
 
     @Override public void onActionClicked(Action action) {
         super.onActionClicked(action);
         if (action == mClosedCaptioningAction) {
             mClosedCaptioningAction.nextIndex();
+        } else if (action == mPipAction) {
+            ((Activity) getContext()).enterPictureInPictureMode();
         }
     }
 
