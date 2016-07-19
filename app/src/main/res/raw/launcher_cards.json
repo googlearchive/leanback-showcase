@@ -38,6 +38,13 @@
         "description": "Showcase of various card design and layouts"
       },
       {
+        "id": 5,
+        "type": "DEFAULT",
+        "title": "Music consumption Examples",
+        "localImageResource": "thumbnail_example_music_consumption",
+        "description": "Showcase of various card design and layouts"
+      },
+      {
         "id": 6,
         "type": "DEFAULT",
         "title": "Wizard Examples",

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -30,12 +30,12 @@ import android.view.SurfaceView;
 
 
 public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment implements
-        OnItemViewClickedListener, MediaPlayerGlue.OnMediaFileFinishedPlayingListener {
+        OnItemViewClickedListener, MediaPlayerGlue.OnMediaStateChangeListener {
 
     private static final String URL = "http://techslides.com/demos/sample-videos/small.mp4";
     public static final String TAG = "VideoConsumptionExampleFragment";
     private ArrayObjectAdapter mRowsAdapter;
-    private MediaPlayerGlue mGlue;
+    private VideoMediaPlayerGlue mGlue;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,11 +50,11 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
             }
         };
         mGlue.setOnMediaFileFinishedPlayingListener(this);
-        MediaPlayerGlue.MetaData metaData = new MediaPlayerGlue.MetaData();
-        metaData.setArtist("A Googler");
-        metaData.setTitle("Diving with Sharks");
-        mGlue.setMetaData(metaData);
-        mGlue.setMediaSource(URL);
+        MediaMetaData mediaMetaData = new MediaMetaData();
+        mediaMetaData.setMediaTitle("Diving with Sharks");
+        mediaMetaData.setMediaArtistName("A Googler");
+        mediaMetaData.setMediaSourcePath(URL);
+        mGlue.prepareIfNeededAndPlay(mediaMetaData);
 
 
         Fragment videoSurfaceFragment = getFragmentManager()
@@ -89,6 +89,7 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
 
     @Override
     public void onPause() {
+        // Enabling the video stay visible and play in the background when home screen is pressed.
         if (mGlue.isMediaPlaying()) {
             boolean isVisibleBehind = getActivity().requestVisibleBehind(true);
             boolean isPictureInPictureMode = VideoExampleActivity.supportsPictureInPicture(
@@ -107,6 +108,13 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
         super.onStop();
         mGlue.enableProgressUpdating(false);
         mGlue.reset();
+        mGlue.saveUIState();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mGlue.releaseResources();
     }
 
     private void addPlaybackControlsRow() {
@@ -127,8 +135,9 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
 
 
     @Override
-    public void onMediaFileFinishedPlaying(MediaPlayerGlue.MetaData metaData) {
-        mGlue.startPlayback();
+    public void onMediaStateChanged(MediaMetaData currentMediaMetaData, int currentMediaState) {
+        if (currentMediaState == MediaUtils.MEDIA_STATE_COMPLETED) {
+            mGlue.startPlayback();
+        }
     }
-
 }

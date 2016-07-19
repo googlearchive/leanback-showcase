@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -16,14 +16,13 @@
 package android.support.v17.leanback.supportleanbackshowcase.app.media;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v17.leanback.app.PlaybackControlGlue;
 import android.support.v17.leanback.app.PlaybackOverlayFragment;
+import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ControlButtonPresenterSelector;
@@ -35,14 +34,13 @@ import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.SurfaceHolder;
 import android.view.View;
 
-import java.io.IOException;
-
 /**
- * This glue extends the {@link PlaybackControlGlue} with a {@link MediaPlayer} synchronization. It
- * supports 7 actions: <ul> <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.FastForwardAction}</li>
+ * This glue extends the {@link PlaybackControlGlue} with a {@link MediaPlayer} synchronization.
+ * This glue layer provides common functionality for both music and video players (refer to
+ * {@link MusicMediaPlayerGlue} and {@link VideoMediaPlayerGlue}).
+ * It supports 7 actions: <ul> <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.FastForwardAction}</li>
  * <li>{@link android.support.v17.leanback.widget.PlaybackControlsRow.RewindAction}</li> <li>{@link
  * android.support.v17.leanback.widget.PlaybackControlsRow.PlayPauseAction}</li> <li>{@link
  * android.support.v17.leanback.widget.PlaybackControlsRow.ShuffleAction}</li> <li>{@link
@@ -56,29 +54,36 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
 
     public static final int FAST_FORWARD_REWIND_STEP = 10 * 1000; // in milliseconds
     public static final int FAST_FORWARD_REWIND_REPEAT_DELAY = 200; // in milliseconds
-    private static final String TAG = "MediaPlayerGlue";
+    private static final String TAG = "MusicMediaPlayerGlue";
     protected final PlaybackControlsRow.ThumbsDownAction mThumbsDownAction;
     protected final PlaybackControlsRow.ThumbsUpAction mThumbsUpAction;
     private final Context mContext;
-    private final MediaPlayer mPlayer = new MediaPlayer();
     private final PlaybackControlsRow.RepeatAction mRepeatAction;
     private final PlaybackControlsRow.ShuffleAction mShuffleAction;
-    private PlaybackControlsRow mControlsRow;
-    private Runnable mRunnable;
-    private Handler mHandler = new Handler();
-    private boolean mPaused = false;
-    private boolean mInitialized = false; // true when the MediaPlayer is prepared/initialized
-    private OnMediaFileFinishedPlayingListener mMediaFileFinishedPlayingListener;
+    protected PlaybackControlsRow mControlsRow;
+    private static final int REFRESH_PROGRESS = 1;
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case REFRESH_PROGRESS:
+                    updateProgress();
+                    Log.d(TAG, "enableProgressUpdating(boolean)");
+                    queueNextRefresh();
+            }
+        }
+    };
+
+    protected boolean mInitialized = false; // true when the MediaPlayer is prepared/initialized
+    protected OnMediaStateChangeListener mMediaFileStateChangeListener;
     private Action mSelectedAction; // the action which is currently selected by the user
     private long mLastKeyDownEvent = 0L; // timestamp when the last DPAD_CENTER KEY_DOWN occurred
-    private MetaData mMetaData;
-    private Uri mMediaSourceUri = null;
-    private String mMediaSourcePath = null;
+
+    protected MediaMetaData mMediaMetaData = null;
 
     public MediaPlayerGlue(Context context, PlaybackOverlayFragment fragment) {
         super(context, fragment, new int[]{1});
         mContext = context;
-
         // Instantiate secondary actions
         mShuffleAction = new PlaybackControlsRow.ShuffleAction(mContext);
         mRepeatAction = new PlaybackControlsRow.RepeatAction(mContext);
@@ -87,26 +92,14 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
         mThumbsDownAction.setIndex(PlaybackControlsRow.ThumbsAction.OUTLINE);
         mThumbsUpAction.setIndex(PlaybackControlsRow.ThumbsAction.OUTLINE);
 
-        // Setup controls and notify UI about change.
-        setFadingEnabled(false);
-        onStateChanged();
-
         // Register selected listener such that we know what action the user currently has focused.
         fragment.setOnItemViewSelectedListener(this);
     }
 
-    /**
-     * Will reset the {@link MediaPlayer} and the glue such that a new file can be played. You are
-     * not required to call this method before playing the first file. However you have to call it
-     * before playing a second one.
-     */
-    public void reset() {
-        mPaused = mInitialized = false;
-        mPlayer.reset();
-    }
 
-    public void setOnMediaFileFinishedPlayingListener(OnMediaFileFinishedPlayingListener listener) {
-        mMediaFileFinishedPlayingListener = listener;
+
+    public void setOnMediaFileFinishedPlayingListener(OnMediaStateChangeListener listener) {
+        mMediaFileStateChangeListener = listener;
     }
 
     /**
@@ -122,13 +115,6 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
     }
 
     /**
-     * @see MediaPlayer#setDisplay(SurfaceHolder)
-     */
-    public void setDisplay(SurfaceHolder surfaceHolder) {
-        mPlayer.setDisplay(surfaceHolder);
-    }
-
-    /**
      * Use this method to setup the {@link PlaybackControlsRowPresenter}. It'll be called
      * <u>after</u> the {@link PlaybackControlsRowPresenter} has been created and the primary and
      * secondary actions have been added.
@@ -137,8 +123,10 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
      */
     public void setupControlsRowPresenter(PlaybackControlsRowPresenter presenter) {
         // TODO: hahnr@ move into resources
-        presenter.setProgressColor(Color.parseColor("#feab91"));
-        presenter.setBackgroundColor(Color.parseColor("#db2a0f"));
+        presenter.setProgressColor(getContext().getResources().getColor(
+                R.color.player_progress_color));
+        presenter.setBackgroundColor(getContext().getResources().getColor(
+                R.color.player_background_color));
     }
 
     @Override public PlaybackControlsRowPresenter createControlsRowAndPresenter() {
@@ -156,17 +144,16 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
 
     @Override public void enableProgressUpdating(final boolean enabled) {
         if (!enabled) {
-            if (mRunnable != null) mHandler.removeCallbacks(mRunnable);
+            mHandler.removeMessages(REFRESH_PROGRESS);
             return;
         }
-        mRunnable = new Runnable() {
-            @Override public void run() {
-                updateProgress();
-                Log.d(TAG, "enableProgressUpdating(boolean)");
-                mHandler.postDelayed(this, getUpdatePeriod());
-            }
-        };
-        mHandler.postDelayed(mRunnable, getUpdatePeriod());
+        queueNextRefresh();
+    }
+
+    private void queueNextRefresh() {
+        Message refreshMsg = mHandler.obtainMessage(REFRESH_PROGRESS);
+        mHandler.removeMessages(REFRESH_PROGRESS);
+        mHandler.sendMessageDelayed(refreshMsg, getUpdatePeriod());
     }
 
     @Override public void onActionClicked(Action action) {
@@ -223,85 +210,33 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
     }
 
     @Override public boolean hasValidMedia() {
-        return mMetaData != null;
+        return mMediaMetaData != null;
     }
 
-    @Override public boolean isMediaPlaying() {
-        return mPlayer.isPlaying();
-    }
 
     @Override public CharSequence getMediaTitle() {
-        return hasValidMedia() ? mMetaData.getTitle() : "N/a";
+        return hasValidMedia() ? mMediaMetaData.getMediaTitle() : "N/a";
     }
 
     @Override public CharSequence getMediaSubtitle() {
-        return hasValidMedia() ? mMetaData.getArtist() : "N/a";
-    }
-
-    @Override public int getMediaDuration() {
-        return mInitialized ? mPlayer.getDuration() : 0;
+        return hasValidMedia() ? mMediaMetaData.getMediaArtistName() : "N/a";
     }
 
     @Override public Drawable getMediaArt() {
-        return hasValidMedia() ? mMetaData.getCover() : null;
+        return (hasValidMedia() && mMediaMetaData.getMediaAlbumArtResId() != 0) ?
+                getContext().getResources().
+                        getDrawable(mMediaMetaData.getMediaAlbumArtResId(), null)
+                : null;
     }
 
     @Override public long getSupportedActions() {
-        return PlaybackControlGlue.ACTION_PLAY_PAUSE | PlaybackControlGlue.ACTION_FAST_FORWARD | PlaybackControlGlue.ACTION_REWIND;
+        return PlaybackControlGlue.ACTION_PLAY_PAUSE | PlaybackControlGlue.ACTION_FAST_FORWARD
+                | PlaybackControlGlue.ACTION_REWIND;
     }
 
     @Override public int getCurrentSpeedId() {
         // 0 = Pause, 1 = Normal Playback Speed
-        return mPlayer.isPlaying() ? 1 : 0;
-    }
-
-    @Override public int getCurrentPosition() {
-        return mInitialized ? mPlayer.getCurrentPosition() : 0;
-    }
-
-    @Override protected void startPlayback(int speed) throws IllegalStateException {
-        if (mPaused) {
-            mPlayer.start();
-        } else if (!isMediaPlaying()) {
-            reset();
-            try {
-                if (mMediaSourceUri != null) mPlayer.setDataSource(getContext(), mMediaSourceUri);
-                else mPlayer.setDataSource(mMediaSourcePath);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override public void onPrepared(MediaPlayer mp) {
-                    mInitialized = true;
-                    mPaused = false;
-                    mPlayer.start();
-                    onMetadataChanged();
-                    onStateChanged();
-                    updateProgress();
-                }
-            });
-            mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override public void onCompletion(MediaPlayer mp) {
-                    if (mInitialized && mMediaFileFinishedPlayingListener != null)
-                        mMediaFileFinishedPlayingListener.onMediaFileFinishedPlaying(mMetaData);
-                }
-            });
-            mPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                @Override public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                    mControlsRow.setBufferedProgress((int) (mp.getDuration() * (percent / 100f)));
-                }
-            });
-            mPlayer.prepareAsync();
-            onStateChanged();
-        }
-    }
-
-    @Override protected void pausePlayback() {
-        if (mPlayer.isPlaying()) {
-            mPlayer.pause();
-            mPaused = true;
-        }
+        return isMediaPlaying() ? 1 : 0;
     }
 
     @Override protected void skipToNext() {
@@ -312,29 +247,8 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
         // Not supported.
     }
 
-    /**
-     * Called whenever the user presses fast-forward/rewind or when the user keeps the corresponding
-     * action pressed.
-     *
-     * @param newPosition The new position of the media track in milliseconds.
-     */
-    protected void seekTo(int newPosition) {
-        mPlayer.seekTo(newPosition);
-    }
+    protected abstract void seekTo(int newPosition);
 
-    /**
-     * @see MediaPlayer#setDataSource(Context, Uri)
-     */
-    public void setMediaSource(Uri uri) {
-        mMediaSourceUri = uri;
-    }
-
-    /**
-     * @see MediaPlayer#setDataSource(String)
-     */
-    public void setMediaSource(String path) {
-        mMediaSourcePath = path;
-    }
 
     /**
      * Call to <code>startPlayback(1)</code>.
@@ -367,8 +281,12 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
         return mRepeatAction.getIndex() == PlaybackControlsRow.RepeatAction.ALL;
     }
 
-    public void setMetaData(MetaData metaData) {
-        mMetaData = metaData;
+    public MediaMetaData getMediaMetaData() {
+        return mMediaMetaData;
+    }
+
+    public void setMediaMetaData(MediaMetaData mediaMetaData) {
+        mMediaMetaData = mediaMetaData;
         onMetadataChanged();
     }
 
@@ -393,54 +311,18 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
         }
     }
 
-    /**
-     * A listener which will be called whenever a track is finished playing.
-     */
-    public interface OnMediaFileFinishedPlayingListener {
 
+    /**
+     * A listener which will be called whenever a media item's playback status changes.
+     */
+    public interface OnMediaStateChangeListener {
         /**
-         * Called when a track is finished playing.
-         *
-         * @param metaData The track's {@link MetaData} which just finished playing.
+         * Called when a media item's playback state changes.
+         * @param currentMediaMetaData {@link MediaMetaData} of the current media item
+         * @param currentMediaState The current play state of the media item. For
+         * {@link MusicMediaPlayerGlue}'s different play states, refer to {@link MediaUtils}
          */
-        void onMediaFileFinishedPlaying(MetaData metaData);
-
-    }
-
-    /**
-     * Holds the meta data such as track title, artist and cover art. It'll be used by the {@link
-     * MediaPlayerGlue}.
-     */
-    public static class MetaData {
-
-        private String mTitle;
-        private String mArtist;
-        private Drawable mCover;
-
-
-        public String getTitle() {
-            return mTitle;
-        }
-
-        public void setTitle(String title) {
-            this.mTitle = title;
-        }
-
-        public String getArtist() {
-            return mArtist;
-        }
-
-        public void setArtist(String artist) {
-            this.mArtist = artist;
-        }
-
-        public Drawable getCover() {
-            return mCover;
-        }
-
-        public void setCover(Drawable cover) {
-            this.mCover = cover;
-        }
+        void onMediaStateChanged(MediaMetaData currentMediaMetaData, int currentMediaState);;
     }
 
 }
