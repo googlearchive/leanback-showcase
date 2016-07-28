@@ -19,47 +19,54 @@
       {
         "id": 2,
         "type": "DEFAULT",
-        "title": "Grid Examples",
+        "title": "Image Grid Examples",
         "localImageResource": "thumbnail_example_grid",
-        "description": "Showcase of various card design and layouts"
+        "description": "Showcase of various images in a vertical grid"
       },
       {
         "id": 3,
+        "type": "DEFAULT",
+        "title": "Video Grid Examples",
+        "localImageResource": "thumbnail_example_grid",
+        "description": "Showcase of various videos in a vertical grid"
+      },
+      {
+        "id": 4,
         "type": "DEFAULT",
         "title": "Detail Examples",
         "localImageResource": "thumbnail_example_detail",
         "description": "Showcase of various card design and layouts"
       },
       {
-        "id": 4,
+        "id": 5,
         "type": "DEFAULT",
         "title": "Video consumption Examples",
         "localImageResource": "thumbnail_example_video_consumption",
         "description": "Showcase of various card design and layouts"
       },
       {
-        "id": 5,
+        "id": 6,
         "type": "DEFAULT",
         "title": "Music consumption Examples",
         "localImageResource": "thumbnail_example_music_consumption",
         "description": "Showcase of various card design and layouts"
       },
       {
-        "id": 6,
+        "id": 7,
         "type": "DEFAULT",
         "title": "Wizard Examples",
         "localImageResource": "thumbnail_example_wizard",
         "description": "Showcase of various card design and layouts"
       },
       {
-        "id": 7,
+        "id": 8,
         "type": "DEFAULT",
         "title": "Settings Examples",
         "localImageResource": "thumbnail_example_settings",
         "description": "Showcase of various card design and layouts"
       },
       {
-        "id": 8,
+        "id": 9,
         "type": "DEFAULT",
         "title": "Dialog Examples",
         "localImageResource": "thumbnail_example_dialog",

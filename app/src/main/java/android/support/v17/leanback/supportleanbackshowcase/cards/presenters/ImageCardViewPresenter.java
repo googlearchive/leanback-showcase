@@ -43,12 +43,12 @@ public class ImageCardViewPresenter extends AbstractCardPresenter<ImageCardView>
     @Override
     protected ImageCardView onCreateView() {
         ImageCardView imageCardView = new ImageCardView(getContext());
-        imageCardView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getContext(), "Clicked on ImageCardView", Toast.LENGTH_SHORT).show();
-            }
-        });
+//        imageCardView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Toast.makeText(getContext(), "Clicked on ImageCardView", Toast.LENGTH_SHORT).show();
+//            }
+//        });
         return imageCardView;
     }
 

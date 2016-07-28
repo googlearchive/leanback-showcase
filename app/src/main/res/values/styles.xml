@@ -115,10 +115,21 @@
         <item name="cardBackground">@null</item>
     </style>
 
-    <!-- Theme corresponding to the GridCardTheme -->
+    <style name="VideoGridCardImageStyle" parent="Widget.Leanback.ImageCardView.ImageStyle">
+        <item name="android:layout_width">190dp</item>
+        <item name="android:layout_height">105dp</item>
+    </style>
+
+    <!-- Theme used for styling image cards in the vertical grid view -->
     <style name="GridCardTheme" parent="Theme.Leanback">
         <item name="imageCardViewStyle">@style/GridCardStyle</item>
         <item name="imageCardViewImageStyle">@style/GridCardImageStyle</item>
+    </style>
+
+    <!-- Theme used for styling video cards in the vertical grid view -->
+    <style name="VideoGridCardTheme" parent="Theme.Leanback">
+        <item name="imageCardViewStyle">@style/GridCardStyle</item>
+        <item name="imageCardViewImageStyle">@style/VideoGridCardImageStyle</item>
     </style>
 
     <!-- A default card style. Used in cards example. -->

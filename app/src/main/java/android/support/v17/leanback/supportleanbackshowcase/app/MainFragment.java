@@ -22,6 +22,7 @@ import android.support.v17.leanback.supportleanbackshowcase.app.cards.CardExampl
 import android.support.v17.leanback.supportleanbackshowcase.app.details.DetailViewExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.dialog.DialogExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.grid.GridExampleActivity;
+import android.support.v17.leanback.supportleanbackshowcase.app.grid.VideoGridExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.media.MusicExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.media.VideoExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.page.PageAndListRowActivity;
@@ -122,20 +123,25 @@ public class MainFragment extends BrowseFragment {
                 }
                 case 3: {
                     intent = new Intent(getActivity().getBaseContext(),
-                            DetailViewExampleActivity.class);
+                            VideoGridExampleActivity.class);
                     break;
                 }
                 case 4: {
                     intent = new Intent(getActivity().getBaseContext(),
-                            VideoExampleActivity.class);
+                            DetailViewExampleActivity.class);
                     break;
                 }
                 case 5: {
                     intent = new Intent(getActivity().getBaseContext(),
-                            MusicExampleActivity.class);
+                            VideoExampleActivity.class);
                     break;
                 }
                 case 6: {
+                    intent = new Intent(getActivity().getBaseContext(),
+                            MusicExampleActivity.class);
+                    break;
+                }
+                case 7: {
                     // Let's create a new Wizard for a given Movie. The movie can come from any sort
                     // of data source. To simplify this example we decode it from a JSON source
                     // which might be loaded from a server in a real world example.
@@ -154,13 +160,13 @@ public class MainFragment extends BrowseFragment {
                     // Finally, start the wizard Activity.
                     break;
                 }
-                case 7: {
+                case 8: {
                     intent = new Intent(getActivity().getBaseContext(),
                             SettingsExampleActivity.class);
                     startActivity(intent);
                     return;
                 }
-                case 8: {
+                case 9: {
                     intent = new Intent(getActivity().getBaseContext(),
                             DialogExampleActivity.class);
                     break;

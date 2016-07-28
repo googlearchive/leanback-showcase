@@ -22,7 +22,9 @@
     <string name="card_examples_title">Card Examples</string>
     <string name="detail_view_title">DetailView Example</string>
     <string name="action_cicked">Action clicked. Implement your own handler.</string>
-    <string name="grid_example_title">Grid Example</string>
+    <string name="grid_example_title">Image Grid Example</string>
+    <string name="video_grid_example_title">Video Grid Example</string>
+    <string name="videos_url">https://storage.googleapis.com/android-tv/android_tv_videos_new.json</string>
     <string name="action_buy">Buy </string>
     <string name="action_wishlist">Add to wishlist</string>
     <string name="action_related">Related</string>

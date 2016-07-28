@@ -47,6 +47,9 @@ public class CardPresenterSelector extends PresenterSelector {
                 case SINGLE_LINE:
                     presenter = new SingleLineCardPresenter(mContext);
                     break;
+                case VIDEO_GRID:
+                    presenter = new VideoCardViewPresenter(mContext, R.style.VideoGridCardTheme);
+                    break;
                 case MOVIE:
                 case MOVIE_BASE:
                 case MOVIE_COMPLETE:

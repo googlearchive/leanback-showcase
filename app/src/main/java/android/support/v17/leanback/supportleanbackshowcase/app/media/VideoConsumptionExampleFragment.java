@@ -25,6 +25,7 @@ import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -49,12 +50,7 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
                 mRowsAdapter.notifyArrayItemRangeChanged(0, 1);
             }
         };
-        mGlue.setOnMediaFileFinishedPlayingListener(this);
-        MediaMetaData mediaMetaData = new MediaMetaData();
-        mediaMetaData.setMediaTitle("Diving with Sharks");
-        mediaMetaData.setMediaArtistName("A Googler");
-        mediaMetaData.setMediaSourcePath(URL);
-        mGlue.prepareIfNeededAndPlay(mediaMetaData);
+
 
 
         Fragment videoSurfaceFragment = getFragmentManager()
@@ -85,6 +81,26 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
     public void onStart() {
         super.onStart();
         mGlue.enableProgressUpdating(mGlue.hasValidMedia() && mGlue.isMediaPlaying());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+       // String intentVideoUrl = getActivity().getIntent().getStringExtra(VideoExampleActivity.TAG);
+        MediaMetaData intentMetaData = getActivity().getIntent().getParcelableExtra(
+                VideoExampleActivity.TAG);
+        MediaMetaData currentMetaData = new MediaMetaData();
+        if (intentMetaData != null) {
+            currentMetaData.setMediaTitle(intentMetaData.getMediaTitle());
+            currentMetaData.setMediaArtistName(intentMetaData.getMediaArtistName());
+            currentMetaData.setMediaSourcePath(intentMetaData.getMediaSourcePath());
+        } else {
+            currentMetaData.setMediaTitle("Diving with Sharks");
+            currentMetaData.setMediaArtistName("A Googler");
+            currentMetaData.setMediaSourcePath(URL);
+        }
+        mGlue.setOnMediaFileFinishedPlayingListener(this);
+        mGlue.prepareIfNeededAndPlay(currentMetaData);
     }
 
     @Override
