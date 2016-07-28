@@ -42,7 +42,7 @@ public class MediaMetaData implements Parcelable{
         mMediaAlbumArtResId = mediaAlbumArtResId;
     }
 
-    MediaMetaData() {
+    public MediaMetaData() {
     }
 
     public MediaMetaData(Parcel in) {

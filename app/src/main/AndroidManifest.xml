@@ -62,11 +62,15 @@
             android:exported="true"
             android:theme="@style/Theme.Example.LeanbackVerticalGrid"></activity>
         <activity
+            android:name=".app.grid.VideoGridExampleActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Example.LeanbackVerticalGrid"></activity>
+        <activity
             android:name=".app.media.VideoExampleActivity"
             android:exported="true"
             android:theme="@style/Theme.Example.Leanback"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection"
-            android:launchMode="singleTask"
+            android:launchMode="standard"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
             ></activity>

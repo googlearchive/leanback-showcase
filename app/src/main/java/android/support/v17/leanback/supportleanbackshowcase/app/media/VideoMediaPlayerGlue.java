@@ -146,7 +146,9 @@ public abstract class VideoMediaPlayerGlue extends MediaPlayerGlue implements
      */
     @Override
     protected void seekTo(int newPosition) {
-        mPlayer.seekTo(newPosition);
+        if (mInitialized) {
+            mPlayer.seekTo(newPosition);
+        }
     }
 
     public void prepareIfNeededAndPlay(MediaMetaData mediaMetaData) {
@@ -169,7 +171,6 @@ public abstract class VideoMediaPlayerGlue extends MediaPlayerGlue implements
         } else {
             prepareNewMedia(mediaMetaData);
         }
-        mMediaMetaData = mediaMetaData;
     }
 
     public void saveUIState() {
@@ -200,6 +201,10 @@ public abstract class VideoMediaPlayerGlue extends MediaPlayerGlue implements
 
     private void prepareNewMedia(final MediaMetaData mediaMetaData) {
         reset();
+        // mMediaMetaData must be set in the beginning before onStateChanged() call so that
+        // hasValidMedia returns true. Otherwise, updatePlaybackState is not called and the
+        // primary controls bar is not displayed at the start when media is prepared.
+        mMediaMetaData = mediaMetaData;
         try {
             if (mediaMetaData.getMediaSourceUri() != null) {
                 mPlayer.setDataSource(getContext(), mediaMetaData.getMediaSourceUri());
@@ -227,7 +232,9 @@ public abstract class VideoMediaPlayerGlue extends MediaPlayerGlue implements
         });
         mPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
             @Override public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                mControlsRow.setBufferedProgress((int) (mp.getDuration() * (percent / 100f)));
+                if (mInitialized) {
+                    mControlsRow.setBufferedProgress((int) (mp.getDuration() * (percent / 100f)));
+                }
             }
         });
         mPlayer.prepareAsync();
@@ -236,6 +243,8 @@ public abstract class VideoMediaPlayerGlue extends MediaPlayerGlue implements
 
     public void releaseResources() {
         if (mPlayer != null) {
+            mInitialized = false;
+            mMediaMetaData = null;
             mPlayer.reset();
             mPlayer.release();
             mPlayer = null;
@@ -247,6 +256,19 @@ public abstract class VideoMediaPlayerGlue extends MediaPlayerGlue implements
 
     @Override
     public void onAudioFocusChange(int focusChange) {
-
+        switch (focusChange) {
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                Log.d(TAG, "AudioFocus loss transient.");
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                Log.d(TAG, "AudioFocus loss transient can duck.");
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS:
+                Log.d(TAG, "AudioFocus loss");
+                break;
+            case AudioManager.AUDIOFOCUS_GAIN:
+                Log.d(TAG, "AudioFocus Gained");
+                break;
+        }
     }
 }
