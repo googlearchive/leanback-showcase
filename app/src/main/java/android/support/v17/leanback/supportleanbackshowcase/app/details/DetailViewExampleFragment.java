@@ -84,11 +84,11 @@ public class DetailViewExampleFragment extends DetailsFragment implements OnItem
                 View actionsView = viewHolder.view.
                         findViewById(R.id.details_overview_actions_background);
                 actionsView.setBackgroundColor(getActivity().getResources().
-                        getColor(R.color.detail_view_actionbar_background, null));
+                        getColor(R.color.detail_view_actionbar_background));
 
                 View detailsView = viewHolder.view.findViewById(R.id.details_frame);
                 detailsView.setBackgroundColor(
-                        getResources().getColor(R.color.detail_view_background, null));
+                        getResources().getColor(R.color.detail_view_background));
                 return viewHolder;
             }
         };
@@ -169,8 +169,7 @@ public class DetailViewExampleFragment extends DetailsFragment implements OnItem
     public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
                                RowPresenter.ViewHolder rowViewHolder, Row row) {
         if (mRowsAdapter.indexOf(row) > 0) {
-            int backgroundColor = getResources().getColor(R.color.detail_view_related_background,
-                    null);
+            int backgroundColor = getResources().getColor(R.color.detail_view_related_background);
             getView().setBackgroundColor(backgroundColor);
         } else {
             getView().setBackground(null);
