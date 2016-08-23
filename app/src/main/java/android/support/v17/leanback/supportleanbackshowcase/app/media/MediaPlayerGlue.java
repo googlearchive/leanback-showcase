@@ -68,7 +68,6 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
             switch (msg.what) {
                 case REFRESH_PROGRESS:
                     updateProgress();
-                    Log.d(TAG, "enableProgressUpdating(boolean)");
                     queueNextRefresh();
             }
         }
@@ -143,6 +142,7 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
     }
 
     @Override public void enableProgressUpdating(final boolean enabled) {
+        Log.d(TAG, "enableProgressUpdating: " + enabled);
         if (!enabled) {
             mHandler.removeMessages(REFRESH_PROGRESS);
             return;
@@ -324,5 +324,4 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
          */
         void onMediaStateChanged(MediaMetaData currentMediaMetaData, int currentMediaState);;
     }
-
 }
