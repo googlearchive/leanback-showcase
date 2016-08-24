@@ -15,6 +15,8 @@
 package android.support.v17.leanback.supportleanbackshowcase.app.media;
 
 import android.app.Fragment;
+import android.content.Intent;
+import android.media.session.MediaSession;
 import android.os.Bundle;
 import android.support.v17.leanback.app.PlaybackOverlayFragment;
 import android.support.v17.leanback.widget.Action;
@@ -26,6 +28,7 @@ import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -70,9 +73,18 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
+                mGlue.resetPlayer();
+                mGlue.releaseMediaSession();
+                // Set a null surface holder to keep the mediaplayer state sane in between surfaceDestroyed
+                // and the next call to surfaceCreated..
+                // Otherwise, the mediaplayer will have an invalid state resulting from
+                // invalid display state when the surface is destroyed. The invalid mediastate leads
+                // to crash when returning to an stopped playback activity since onResume
+                // calls prepareAsync on the mediaplayer while surfaceCreated hasn't been called yet.
+                mGlue.setDisplay(null);
+                mGlue.enableProgressUpdating(false);;
             }
         });
-
         setBackgroundType(PlaybackOverlayFragment.BG_LIGHT);
         addPlaybackControlsRow();
     }
@@ -81,12 +93,12 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
     public void onStart() {
         super.onStart();
         mGlue.enableProgressUpdating(mGlue.hasValidMedia() && mGlue.isMediaPlaying());
+        mGlue.createMediaSessionIfNeeded();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-       // String intentVideoUrl = getActivity().getIntent().getStringExtra(VideoExampleActivity.TAG);
         MediaMetaData intentMetaData = getActivity().getIntent().getParcelableExtra(
                 VideoExampleActivity.TAG);
         MediaMetaData currentMetaData = new MediaMetaData();
@@ -94,6 +106,7 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
             currentMetaData.setMediaTitle(intentMetaData.getMediaTitle());
             currentMetaData.setMediaArtistName(intentMetaData.getMediaArtistName());
             currentMetaData.setMediaSourcePath(intentMetaData.getMediaSourcePath());
+            currentMetaData.setMediaAlbumArtUrl(intentMetaData.getMediaAlbumArtUrl());
         } else {
             currentMetaData.setMediaTitle("Diving with Sharks");
             currentMetaData.setMediaArtistName("A Googler");
@@ -106,6 +119,7 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
     @Override
     public void onPause() {
         // Enabling the video stay visible and play in the background when home screen is pressed.
+        // (gregarious mode)
         if (mGlue.isMediaPlaying()) {
             boolean isVisibleBehind = getActivity().requestVisibleBehind(true);
             boolean isPictureInPictureMode = VideoExampleActivity.supportsPictureInPicture(
@@ -123,14 +137,15 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
     public void onStop() {
         super.onStop();
         mGlue.enableProgressUpdating(false);
-        mGlue.reset();
+        mGlue.resetPlayer();
+        mGlue.releaseMediaSession();
         mGlue.saveUIState();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mGlue.releaseResources();
+        mGlue.releaseMediaPlayer();
     }
 
     private void addPlaybackControlsRow() {

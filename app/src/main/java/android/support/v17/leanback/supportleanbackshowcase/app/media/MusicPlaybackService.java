@@ -33,7 +33,7 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.util.Log;
-import android.widget.TextView;
+import android.view.KeyEvent;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -175,9 +175,11 @@ public class MusicPlaybackService extends Service {
             mPlayer = new MediaPlayer();
         }
         if (mMediaSession == null) {
-            mMediaSession = new MediaSession(this, "Media Player Session");
+            mMediaSession = new MediaSession(this, "MusicPlayer Session");
             mMediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
                     MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+            mMediaSession.setCallback(new MediaSessionCallback());
+            updateMediaSessionIntent();
         }
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         setUpAsForeground("This Awesome Music Service :)");
@@ -344,9 +346,38 @@ public class MusicPlaybackService extends Service {
         } else {
             playState = PlaybackState.STATE_PAUSED;
         }
-        playbackStateBuilder.setState(playState,
-                PlaybackState.PLAYBACK_POSITION_UNKNOWN, (float) 1.0);
+        long currentPosition = getCurrentPosition();
+        playbackStateBuilder.setState(playState, currentPosition, (float) 1.0).setActions(
+                getPlaybackStateActions()
+        );
         mMediaSession.setPlaybackState(playbackStateBuilder.build());
+    }
+
+    /**
+     * Sets the media session's activity launched when clicking on NowPlayingCard. This returns to
+     * the media screen that is playing or paused; the launched activity corresponds to the
+     * currently shown media session in the NowPlayingCard on TV launcher.
+     */
+    private void updateMediaSessionIntent() {
+        if (mMediaSession == null) {
+            return;
+        }
+        Intent nowPlayIntent = new Intent(getApplicationContext(), MusicExampleActivity.class);
+        PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, nowPlayIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        mMediaSession.setSessionActivity(pi);
+    }
+
+    /**
+     * @return The available set of actions for the media session. These actions should be provided
+     * for the MediaSession PlaybackState in order for
+     * {@link MediaSession.Callback#onMediaButtonEvent} to call relevant methods of onPause() or
+     * onPlay().
+     */
+    private long getPlaybackStateActions() {
+        return PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE |
+                PlaybackState.ACTION_FAST_FORWARD | PlaybackState.ACTION_REWIND |
+                PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS;
     }
 
     public void reset() {
@@ -461,5 +492,55 @@ public class MusicPlaybackService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
+    }
+
+    private class MediaSessionCallback extends MediaSession.Callback {
+
+        @Override
+        public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
+            KeyEvent keyEvent = mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+            Log.d(TAG, "onMediaButtonEvent in MediaSessionCallback called with event: " + keyEvent);
+            return super.onMediaButtonEvent(mediaButtonIntent);
+        }
+
+        @Override
+        public void onPlay() {
+            play();
+        }
+
+        @Override
+        public void onPause() {
+            pause();
+        }
+
+        @Override
+        public void onSkipToNext() {
+            super.onSkipToNext();
+        }
+
+        @Override
+        public void onSkipToPrevious() {
+            super.onSkipToPrevious();
+        }
+
+        @Override
+        public void onFastForward() {
+            super.onFastForward();
+        }
+
+        @Override
+        public void onRewind() {
+            super.onRewind();
+        }
+
+        @Override
+        public void onStop() {
+            super.onStop();
+        }
+
+        @Override
+        public void onSeekTo(long pos) {
+            super.onSeekTo(pos);
+        }
     }
 }

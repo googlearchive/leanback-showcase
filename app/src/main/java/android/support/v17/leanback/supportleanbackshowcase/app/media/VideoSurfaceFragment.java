@@ -34,6 +34,12 @@ public class VideoSurfaceFragment extends Fragment {
 
     }
 
+    @Override
+    public void onStop() {
+        Log.d(TAG, "onStop called!");
+        super.onStop();
+    }
+
     @Nullable @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                                  Bundle savedInstanceState) {
         return inflater.inflate(R.layout.video_surface_fragment, null);

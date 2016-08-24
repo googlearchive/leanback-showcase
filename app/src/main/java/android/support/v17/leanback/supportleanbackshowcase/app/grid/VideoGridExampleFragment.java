@@ -15,6 +15,7 @@
 package android.support.v17.leanback.supportleanbackshowcase.app.grid;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -217,15 +218,16 @@ public class VideoGridExampleFragment extends VerticalGridFragment implements
     @Override
     public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
                               RowPresenter.ViewHolder rowViewHolder, Row row) {
-        Log.d(TAG, "onItem Clicked in " + this);
         if (item instanceof  VideoCard) {
             VideoCard itemCard = (VideoCard) item;
             MediaMetaData metaData = new MediaMetaData();
             metaData.setMediaSourcePath(itemCard.getVideoSource());
             metaData.setMediaTitle(itemCard.getTitle());
             metaData.setMediaArtistName(itemCard.getDescription());
+            metaData.setMediaAlbumArtUrl(itemCard.getImageUrl());
             Intent intent = new Intent(getActivity(), VideoExampleActivity.class);
             intent.putExtra(VideoExampleActivity.TAG, metaData);
+            intent.setData(Uri.parse(metaData.getMediaSourcePath()));
             getActivity().startActivity(intent);
         }
     }
