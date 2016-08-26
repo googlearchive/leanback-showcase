@@ -71,6 +71,7 @@
 
     <style name="Theme.Example.LeanbackMusic" parent="Theme.Example.Leanback">
         <item name="android:windowBackground">@drawable/background_sax</item>
+        <item name="rowsVerticalGridStyle">@style/Widget.Leanback.Rows.VerticalGridView.NoFocusOutSideEnd</item>
      </style>
 
     <style name="Theme.Example.LeanbackMusic.RegularSongNumbers">

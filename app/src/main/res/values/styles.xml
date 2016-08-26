@@ -233,6 +233,13 @@
         <item name="android:background">#282248</item>
     </style>
 
+    <style name="Widget.Leanback.Rows.VerticalGridView.NoFocusOutSideEnd">
+        <!-- Ensures that the focus does not wrap around when pressing DPAD_RIGHT from the last view
+        within a row. By default, VerticalGridView wraps around if this attribute is not explicitly
+        set -->
+        <item name="focusOutSideEnd">false</item>
+    </style>
+
     <style name="RegularMediaItemTextStyle" parent="TextAppearance.Leanback.PlaybackMediaItemNumber">
         <item name="android:textColor">#FF6255</item>
         <item name="android:textSize">18sp</item>
