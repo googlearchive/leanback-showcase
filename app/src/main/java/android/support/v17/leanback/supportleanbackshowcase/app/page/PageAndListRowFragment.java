@@ -314,6 +314,12 @@ public class PageAndListRowFragment extends BrowseFragment {
         }
 
         @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            getMainFragmentAdapter().getFragmentHost().showTitleView(false);
+        }
+
+        @Override
         public View onCreateView(
                 LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             FrameLayout root = new FrameLayout(getActivity());
