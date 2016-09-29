@@ -87,7 +87,7 @@ public class MainFragment extends BrowseFragment {
 
     private void setupUIElements() {
         setTitle(getString(R.string.browse_title));
-        setBadgeDrawable(getResources().getDrawable(R.drawable.title_android_tv, null));
+        setBadgeDrawable(getResources().getDrawable(R.drawable.title_android_tv));
         setHeadersState(HEADERS_DISABLED);
         setHeadersTransitionOnBackEnabled(false);
         setBrandColor(getResources().getColor(R.color.fastlane_background));

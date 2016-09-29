@@ -19,7 +19,8 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v17.leanback.app.PlaybackOverlayFragment;
+import android.support.v17.leanback.app.PlaybackControlSupportGlue;
+import android.support.v17.leanback.app.PlaybackOverlaySupportFragment;
 import android.support.v17.leanback.supportleanbackshowcase.utils.Constants;
 import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v17.leanback.supportleanbackshowcase.utils.Utils;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * This example shows how to play music files and build a simple track list.
  */
-public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment implements
+public class MusicConsumptionExampleFragment extends PlaybackOverlaySupportFragment implements
         BaseOnItemViewClickedListener, BaseOnItemViewSelectedListener,
         MediaPlayerGlue.OnMediaStateChangeListener {
 
@@ -48,18 +49,18 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
     private ArrayObjectAdapter mRowsAdapter;
     private MusicMediaPlayerGlue mGlue;
     private int mCurrentSongIndex = 0;
+    private int mOldSongIndex = mCurrentSongIndex;
+    private int mMediaListObjectAdapterStartIndex = 0;
     private Uri mCurrentMediaUri;
     private List<Song> mSongList;
     private boolean mAdapterNotified = false;
     private static TextView firstRowView;
-    boolean onStopCalled = false;
-    int stopCount = 1;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (Constants.LOCAL_LOGD) Log.d(TAG, "onCreate");
 
-        mGlue = new MusicMediaPlayerGlue(getActivity(), this) {
+        mGlue = new MusicMediaPlayerGlue(getActivity(), this, getActivity()) {
 
             @Override protected void onRowChanged(PlaybackControlsRow row) {
                 if (mRowsAdapter == null || mAdapterNotified) return;
@@ -84,20 +85,16 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
             MultiActionsProvider.MultiAction playlistAction = new
                     MultiActionsProvider.MultiAction(PLAYLIST_ACTION_ID);
             Drawable[] playlistActionDrawables = new Drawable[] {
-                    res.getDrawable(R.drawable.ic_playlist_add_white_24dp,
-                            getActivity().getTheme()),
-                    res.getDrawable(R.drawable.ic_playlist_add_filled_24dp,
-                            getActivity().getTheme())};
+                    res.getDrawable(R.drawable.ic_playlist_add_white_24dp),
+                    res.getDrawable(R.drawable.ic_playlist_add_filled_24dp)};
             playlistAction.setDrawables(playlistActionDrawables);
             mediaRowActions[0] = playlistAction;
 
             MultiActionsProvider.MultiAction favoriteAction = new
                     MultiActionsProvider.MultiAction(FAVORITE_ACTION_ID);
             Drawable[] favoriteActionDrawables = new Drawable[] {
-                    res.getDrawable(R.drawable.ic_favorite_border_white_24dp,
-                            getActivity().getTheme()),
-                    res.getDrawable(R.drawable.ic_favorite_filled_24dp,
-                            getActivity().getTheme())};
+                    res.getDrawable(R.drawable.ic_favorite_border_white_24dp),
+                    res.getDrawable(R.drawable.ic_favorite_filled_24dp)};
             favoriteAction.setDrawables(favoriteActionDrawables);
             mediaRowActions[1] = favoriteAction;
             song.setMediaRowActions(mediaRowActions);
@@ -182,6 +179,11 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
                         R.style.TextAppearance_Leanback_PlaybackMediaItemDuration);
             }
         }
+
+        @Override
+        protected int getMediaPlayState(Object item) {
+            return ((Song) item).getPlayState();
+        }
     };
 
     static class SongPresenterSelector extends PresenterSelector {
@@ -239,8 +241,10 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
                 .addClassPresenter(PlaybackControlsRow.class,
                         mGlue.createControlsRowAndPresenter()));
         mRowsAdapter.add(mGlue.getControlsRow());
+        mMediaListObjectAdapterStartIndex++;
         mRowsAdapter.add(new TrackListHeader());
-        mRowsAdapter.addAll(2, mSongList);
+        mMediaListObjectAdapterStartIndex++;
+        mRowsAdapter.addAll(mMediaListObjectAdapterStartIndex, mSongList);
         setAdapter(mRowsAdapter);
         setOnItemViewClickedListener(this);
         setOnItemViewSelectedListener(this);
@@ -287,6 +291,14 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
         }
     }
 
+    /**
+     * This is a listener implementation for the {@link OnItemViewSelectedListener} of the {@link
+     * PlaybackOverlaySupportFragment}. This implementation is required in order to detect KEY_DOWN events
+     * on the {@link android.support.v17.leanback.widget.PlaybackControlsRow.FastForwardAction} and
+     * {@link android.support.v17.leanback.widget.PlaybackControlsRow.RewindAction}.
+     * @see OnItemViewSelectedListener#onItemSelected(Presenter.ViewHolder, Object,
+     * RowPresenter.ViewHolder, Object)
+     */
     @Override
     public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
                                RowPresenter.ViewHolder rowViewHolder, Object row) {
@@ -296,22 +308,61 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
     public void onSongDetailsClicked(Song song) {
         int nextSongIndex = mSongList.indexOf(song);
         mCurrentSongIndex = nextSongIndex;
-        startPlayback();
+        if (mOldSongIndex != mCurrentSongIndex) {
+            updatePlayStateForOldSong();
+            startPlayback();
+        } else if (song.getPlayState() == AbstractMediaItemPresenter.PLAY_STATE_PAUSED) {
+            startPlayback();
+        } else {
+            mGlue.pausePlayback();
+        }
+
     }
 
     @Override
     public void onMediaStateChanged(MediaMetaData currentMediaMetaData, int currentMediaState) {
         Uri currentMediaUri = currentMediaMetaData.getMediaSourceUri();
+        mCurrentSongIndex = findSongIndex(currentMediaUri);
+        updatePlayStateForOldSong();
+        if (mCurrentSongIndex == -1) {
+            throw new IllegalArgumentException("currentMediaUri not found in the song list!");
+        }
+        Song song = mSongList.get(mCurrentSongIndex);
+        switch (currentMediaState) {
+            case MediaUtils.MEDIA_STATE_PREPARING:
+            case MediaUtils.MEDIA_STATE_PAUSED:
+            case MediaUtils.MEDIA_STATE_MEDIALIST_COMPLETED:
+                song.setPlayState(AbstractMediaItemPresenter.PLAY_STATE_PAUSED);
+                break;
+            case MediaUtils.MEDIA_STATE_PREPARED:
+            case MediaUtils.MEDIA_STATE_PLAYING:
+                song.setPlayState(AbstractMediaItemPresenter.PLAY_STATE_PLAYING);
+                break;
+        }
+        mRowsAdapter.notifyArrayItemRangeChanged(mMediaListObjectAdapterStartIndex +
+                mCurrentSongIndex, 1);
         if (mCurrentMediaUri == null || !mCurrentMediaUri.equals(currentMediaUri)) {
-            mCurrentSongIndex = findSongIndex(currentMediaUri);
             mCurrentMediaUri = currentMediaUri;
-            if (mCurrentSongIndex == -1) {
-                throw new IllegalArgumentException("currentMediaUri not found in the song list!");
-            }
-            Song song = mSongList.get(mCurrentSongIndex);
             MediaMetaData metaData = createMetaDataFromSong(song);
             mGlue.setMediaMetaData(metaData);
         }
+    }
+
+    /**
+     * Called every time a new song is selected.
+     * Updates the play state UI for the song playing prior to the newly selected song.
+     * Resets its play state back to {@link AbstractMediaItemPresenter#PLAY_STATE_INITIAL} which
+     * flips its first view back to the song number instead of the play animation/icon.
+     */
+    private void updatePlayStateForOldSong() {
+        if (mCurrentSongIndex == mOldSongIndex) {
+            return;
+        }
+        Song song = mSongList.get(mOldSongIndex);
+        song.setPlayState(AbstractMediaItemPresenter.PLAY_STATE_INITIAL);
+        mRowsAdapter.notifyArrayItemRangeChanged(mMediaListObjectAdapterStartIndex +
+                mOldSongIndex, 1);
+        mOldSongIndex = mCurrentSongIndex;
     }
 
     private int findSongIndex(Uri currentMediaUri) {
@@ -328,7 +379,7 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
     private void startPlayback() {
         Song song = mSongList.get(mCurrentSongIndex);
         MediaMetaData mediaMetaData = createMetaDataFromSong(song);
-        mGlue.prepareAndPlay(mediaMetaData);
+        mGlue.prepareAndPlay(PlaybackControlSupportGlue.PLAYBACK_SPEED_NORMAL, mediaMetaData);
     }
 
     private MediaMetaData createMetaDataFromSong(Song song) {

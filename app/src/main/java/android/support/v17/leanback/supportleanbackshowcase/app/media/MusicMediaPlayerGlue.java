@@ -37,6 +37,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.v17.leanback.app.PlaybackOverlayFragment;
+import android.support.v17.leanback.app.PlaybackOverlaySupportFragment;
 import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
@@ -47,6 +48,7 @@ import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -64,7 +66,7 @@ import java.util.List;
  * <p/>
  */
 public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
-        OnItemViewSelectedListener, MusicPlaybackService.ServiceCallback {
+        MusicPlaybackService.ServiceCallback {
 
     public static final int FAST_FORWARD_REWIND_STEP = 10 * 1000; // in milliseconds
     public static final int FAST_FORWARD_REWIND_REPEAT_DELAY = 200; // in milliseconds
@@ -75,21 +77,8 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
     private final PlaybackControlsRow.RepeatAction mRepeatAction;
     private final PlaybackControlsRow.ShuffleAction mShuffleAction;
     private PlaybackControlsRow mControlsRow;
-    private static final int REFRESH_PROGRESS = 1;
-    private final Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case REFRESH_PROGRESS:
-                    updateProgress();
-                    Log.d(TAG, "enableProgressUpdating(boolean)");
-                    queueNextRefresh();
-            }
-        }
-    };
 
     private boolean mInitialized = false; // true when the MediaPlayer is prepared/initialized
-    private Action mSelectedAction; // the action which is currently selected by the user
     private long mLastKeyDownEvent = 0L; // timestamp when the last DPAD_CENTER KEY_DOWN occurred
     private List<MediaMetaData> mMediaMetaDataList = new ArrayList<>();
     boolean mMediaMetaDataListChanged = false; // flag indicating that mMediaMetaDataList is changed and
@@ -109,7 +98,7 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
 
             if (mPlaybackService.getCurrentMediaItem() == null) {
                 if (mStartPlayingAfterConnect && mMediaMetaData != null) {
-                    prepareAndPlay(mMediaMetaData);
+                    prepareAndPlay(PLAYBACK_SPEED_NORMAL, mMediaMetaData);
                 }
             }
 
@@ -133,8 +122,9 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
         }
     };
 
-    public MusicMediaPlayerGlue(Context context, PlaybackOverlayFragment fragment) {
-        super(context, fragment);
+    public MusicMediaPlayerGlue(Context context, PlaybackOverlaySupportFragment fragment,
+                                FragmentActivity activity) {
+        super(context, fragment, activity);
         mContext = context;
 
         // Instantiate secondary actions
@@ -146,9 +136,6 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
         mThumbsUpAction.setIndex(PlaybackControlsRow.ThumbsAction.OUTLINE);
 
         startAndBindToServiceIfNeeded();
-
-        // Register selected listener such that we know what action the user currently has focused.
-        fragment.setOnItemViewSelectedListener(this);
     }
 
     public boolean isPlaybackServiceConnected() {
@@ -198,7 +185,11 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
         switch (currentMediaState) {
             case MediaUtils.MEDIA_STATE_PREPARING:
                 break;
+            case MediaUtils.MEDIA_STATE_COMPLETED:
+                onMediaItemComplete();
+                break;
             case MediaUtils.MEDIA_STATE_MEDIALIST_COMPLETED:
+                onMediaListComplete();
                 updateProgress();
                 enableProgressUpdating(false);
                 break;
@@ -307,20 +298,6 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
         return presenter;
     }
 
-    @Override public void enableProgressUpdating(final boolean enabled) {
-        if (!enabled) {
-            mHandler.removeMessages(REFRESH_PROGRESS);
-            return;
-        }
-        queueNextRefresh();
-    }
-
-    private void queueNextRefresh() {
-        Message refreshMsg = mHandler.obtainMessage(REFRESH_PROGRESS);
-        mHandler.removeMessages(REFRESH_PROGRESS);
-        mHandler.sendMessageDelayed(refreshMsg, getUpdatePeriod());
-    }
-
     @Override public void onActionClicked(Action action) {
         // If either 'Shuffle' or 'Repeat' has been clicked we need to make sure the acitons index
         // is incremented and the UI updated such that we can display the new state.
@@ -354,34 +331,6 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
         onMetadataChanged();
     }
 
-    @Override public boolean onKey(View v, int keyCode, KeyEvent event) {
-        // This method is overridden in order to make implement fast forwarding and rewinding when
-        // the user keeps the corresponding action pressed.
-        // We only consume DPAD_CENTER Action_DOWN events on the Fast-Forward and Rewind action and
-        // only if it has not been pressed in the last X milliseconds.
-        boolean consume = mSelectedAction instanceof PlaybackControlsRow.RewindAction;
-        consume = consume || mSelectedAction instanceof PlaybackControlsRow.FastForwardAction;
-        consume = consume && mInitialized;
-        consume = consume && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER;
-        consume = consume && event.getAction() == KeyEvent.ACTION_DOWN;
-        consume = consume && System
-                .currentTimeMillis() - mLastKeyDownEvent > FAST_FORWARD_REWIND_REPEAT_DELAY;
-        if (consume) {
-            mLastKeyDownEvent = System.currentTimeMillis();
-            int newPosition = getCurrentPosition() + FAST_FORWARD_REWIND_STEP;
-            if (mSelectedAction instanceof PlaybackControlsRow.RewindAction) {
-                newPosition = getCurrentPosition() - FAST_FORWARD_REWIND_STEP;
-            }
-            // Make sure the new calculated duration is in the range 0 >= X >= MediaDuration
-            if (newPosition < 0) newPosition = 0;
-            if (newPosition > getMediaDuration()) newPosition = getMediaDuration();
-            seekTo(newPosition);
-            return true;
-        }
-        return super.onKey(v, keyCode, event);
-    }
-
-
     @Override public boolean isMediaPlaying() {
         return (mPlaybackService != null) && mPlaybackService.isPlaying();
     }
@@ -395,10 +344,11 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
     }
 
     @Override protected void startPlayback(int speed) throws IllegalStateException {
-        prepareAndPlay(mMediaMetaData);
+        prepareAndPlay(speed, mMediaMetaData);
     }
 
     @Override protected void pausePlayback() {
+        super.pausePlayback();
         if (mPlaybackService != null) {
             mPlaybackService.pause();
         }
@@ -433,7 +383,8 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
     }
 
 
-    public void prepareAndPlay(MediaMetaData mediaMetaData) {
+    public void prepareAndPlay(int speed, MediaMetaData mediaMetaData) {
+        super.startPlayback(speed);
         if (mediaMetaData == null) {
             throw new RuntimeException("Provided uri is null!");
         }
@@ -490,28 +441,6 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
             return MusicPlaybackService.MEDIA_ACTION_REPEAT_ALL;
         } else {
             return MusicPlaybackService.MEDIA_ACTION_NO_REPEAT;
-        }
-    }
-
-
-    /**
-     * This is a listener implementation for the {@link OnItemViewSelectedListener} of the {@link
-     * PlaybackOverlayFragment}. This implementation is required in order to detect KEY_DOWN events
-     * on the {@link android.support.v17.leanback.widget.PlaybackControlsRow.FastForwardAction} and
-     * {@link android.support.v17.leanback.widget.PlaybackControlsRow.RewindAction}. Thus you should
-     * <u>NOT</u> set another {@link OnItemViewSelectedListener} on your {@link
-     * PlaybackOverlayFragment}. Instead, override this method and call its super (this)
-     * implementation.
-     *
-     * @see OnItemViewSelectedListener#onItemSelected(Presenter.ViewHolder, Object,
-     * RowPresenter.ViewHolder, Row)
-     */
-    @Override public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
-                                         RowPresenter.ViewHolder rowViewHolder, Row row) {
-        if (item instanceof Action) {
-            mSelectedAction = (Action) item;
-        } else {
-            mSelectedAction = null;
         }
     }
 

@@ -22,10 +22,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
-import android.media.MediaMetadata;
 import android.media.MediaPlayer;
-import android.media.session.MediaSession;
-import android.media.session.PlaybackState;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -38,6 +35,10 @@ import android.view.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
+import android.support.v4.media.session.MediaControllerCompat;
 
 /**
  * Music service that handles all the interactions between the app and the media player. It receives
@@ -61,7 +62,7 @@ public class MusicPlaybackService extends Service {
 
     private MediaPlayer mPlayer;
     // MediaSession created for communication between NowPlayingCard in the launcher and the current MediaPlayer state
-    private MediaSession mMediaSession;
+    private MediaSessionCompat mMediaSession;
 
     private static final String TAG = "MusicPlaybackService";
     int mCurrentMediaPosition = -1;
@@ -175,9 +176,9 @@ public class MusicPlaybackService extends Service {
             mPlayer = new MediaPlayer();
         }
         if (mMediaSession == null) {
-            mMediaSession = new MediaSession(this, "MusicPlayer Session");
-            mMediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
-                    MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+            mMediaSession = new MediaSessionCompat(this, "MusicPlayer Session");
+            mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+                    MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
             mMediaSession.setCallback(new MediaSessionCallback());
             updateMediaSessionIntent();
         }
@@ -281,6 +282,7 @@ public class MusicPlaybackService extends Service {
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override public void onCompletion(MediaPlayer mp) {
                 updateMediaSessionPlayState();
+                notifyMediaStateChanged(MediaUtils.MEDIA_STATE_COMPLETED);
                 if (mRepeatState == MEDIA_ACTION_REPEAT_ALL &&
                         mCurrentMediaPosition == mMediaItemList.size() - 1) {
                     // The last media item is played and repeatAll action is enabled;
@@ -317,34 +319,34 @@ public class MusicPlaybackService extends Service {
             throw new IllegalArgumentException(
                     "mCurrentMediaItem is null in updateMediaSessionMetaData!");
         }
-        MediaMetadata.Builder metaDataBuilder = new MediaMetadata.Builder();
+        MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder();
         if (mCurrentMediaItem.getMediaTitle() != null) {
-            metaDataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE,
+            metaDataBuilder.putString(MediaMetadataCompat.METADATA_KEY_TITLE,
                     mCurrentMediaItem.getMediaTitle());
         }
         if (mCurrentMediaItem.getMediaAlbumName() != null) {
-            metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM,
+            metaDataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ALBUM,
                     mCurrentMediaItem.getMediaAlbumName());
         }
         if (mCurrentMediaItem.getMediaArtistName() != null) {
-            metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST,
+            metaDataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST,
                     mCurrentMediaItem.getMediaArtistName());
         }
         if (mCurrentMediaItem.getMediaAlbumArtResId() != 0) {
             Bitmap albumArtBitmap = BitmapFactory.decodeResource(getResources(),
                     mCurrentMediaItem.getMediaAlbumArtResId());
-            metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, albumArtBitmap);
+            metaDataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArtBitmap);
         }
         mMediaSession.setMetadata(metaDataBuilder.build());
     }
 
     private void updateMediaSessionPlayState() {
-        PlaybackState.Builder playbackStateBuilder = new PlaybackState.Builder();
+        PlaybackStateCompat.Builder playbackStateBuilder = new PlaybackStateCompat.Builder();
         int playState;
         if (isPlaying()) {
-            playState = PlaybackState.STATE_PLAYING;
+            playState = PlaybackStateCompat.STATE_PLAYING;
         } else {
-            playState = PlaybackState.STATE_PAUSED;
+            playState = PlaybackStateCompat.STATE_PAUSED;
         }
         long currentPosition = getCurrentPosition();
         playbackStateBuilder.setState(playState, currentPosition, (float) 1.0).setActions(
@@ -371,13 +373,13 @@ public class MusicPlaybackService extends Service {
     /**
      * @return The available set of actions for the media session. These actions should be provided
      * for the MediaSession PlaybackState in order for
-     * {@link MediaSession.Callback#onMediaButtonEvent} to call relevant methods of onPause() or
+     * {@link MediaSessionCompat.Callback#onMediaButtonEvent} to call relevant methods of onPause() or
      * onPlay().
      */
     private long getPlaybackStateActions() {
-        return PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE |
-                PlaybackState.ACTION_FAST_FORWARD | PlaybackState.ACTION_REWIND |
-                PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS;
+        return PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
+                PlaybackStateCompat.ACTION_FAST_FORWARD | PlaybackStateCompat.ACTION_REWIND |
+                PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
     }
 
     public void reset() {
@@ -494,7 +496,7 @@ public class MusicPlaybackService extends Service {
         return mBinder;
     }
 
-    private class MediaSessionCallback extends MediaSession.Callback {
+    private class MediaSessionCallback extends MediaSessionCompat.Callback {
 
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonIntent) {

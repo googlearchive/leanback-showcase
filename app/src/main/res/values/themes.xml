@@ -61,7 +61,9 @@
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
-        <item name="android:colorPrimary">@color/settings_background</item>
+        <!--<item name="android:colorPrimary">@color/settings_background</item>-->
+        <item name="defaultBrandColor">#F0F0</item>
+        <item name="android:colorAccent">?attr/defaultBrandColor</item>
     </style>
 
     <style name="Theme.Example.LeanbackDetails" parent="Theme.Leanback.Details">
@@ -72,18 +74,19 @@
     <style name="Theme.Example.LeanbackMusic" parent="Theme.Example.Leanback">
         <item name="android:windowBackground">@drawable/background_sax</item>
         <item name="rowsVerticalGridStyle">@style/Widget.Leanback.Rows.VerticalGridView.NoFocusOutSideEnd</item>
+        <item name="playbackMediaItemNumberViewFlipperStyle">@style/Widget.Leanback.PlaybackMediaItemNumberViewFlipperStyle.Visible</item>
      </style>
 
     <style name="Theme.Example.LeanbackMusic.RegularSongNumbers">
         <item name="playbackMediaItemNumberStyle">@style/RegularMediaItemNumberStyle</item>
         <item name="playbackMediaItemNameStyle">@style/RegularMediaItemNameStyle</item>
-        <item name="playbackMediaItemDurationStyle">@style/RegularMediaItemDurationStyle</item>
+        <item name="playbackMediaItemDurationStyle">@style/Widget.Leanback.PlaybackMediaItemDurationStyle.Visible</item>
     </style>
 
     <style name="Theme.Example.LeanbackMusic.FavoriteSongNumbers">
         <item name="playbackMediaItemNumberStyle">@style/FavoriteMediaItemNumberStyle</item>
         <item name="playbackMediaItemNameStyle">@style/FavoriteMediaItemNameStyle</item>
-        <item name="playbackMediaItemDurationStyle">@style/FavoriteMediaItemDurationStyle</item>
+        <item name="playbackMediaItemDurationStyle">@style/Widget.Leanback.PlaybackMediaItemDurationStyle.Visible</item>
     </style>
 
     <style name="Theme.Example.LeanbackMusic.TrackListHeader">

@@ -237,7 +237,14 @@
         <!-- Ensures that the focus does not wrap around when pressing DPAD_RIGHT from the last view
         within a row. By default, VerticalGridView wraps around if this attribute is not explicitly
         set -->
-        <item name="focusOutSideEnd">false</item>
+    </style>
+
+    <style name="Widget.Leanback.PlaybackMediaItemNumberViewFlipperStyle.Visible">
+        <item name="android:visibility">visible</item>
+    </style>
+
+    <style name="Widget.Leanback.PlaybackMediaItemDurationStyle.Visible">
+        <item name="android:visibility">visible</item>
     </style>
 
     <style name="RegularMediaItemTextStyle" parent="TextAppearance.Leanback.PlaybackMediaItemNumber">
@@ -254,9 +261,9 @@
     <style name="RegularMediaItemNameStyle" parent="Widget.Leanback.PlaybackMediaItemNameStyle">
     </style>
 
-    <style name="RegularMediaItemDurationStyle" parent="Widget.Leanback.PlaybackMediaItemDurationStyle">
-        <item name="android:visibility">visible</item>
-    </style>
+    <!--<style name="RegularMediaItemDurationStyle" parent="Widget.Leanback.PlaybackMediaItemDurationStyle">-->
+        <!--<item name="android:visibility">visible</item>-->
+    <!--</style>-->
 
 
     <style name="FavoriteMediaItemTextStyle" parent="TextAppearance.Leanback.PlaybackMediaItemNumber">
@@ -275,7 +282,7 @@
     </style>
 
     <style name="FavoriteMediaItemDurationStyle" parent="Widget.Leanback.PlaybackMediaItemDurationStyle">
-        <item name="android:visibility">visible</item>
+        <!--<item name="android:visibility">visible</item>-->
         <item name="android:textAppearance">@style/FavoriteMediaItemTextStyle</item>
     </style>
 

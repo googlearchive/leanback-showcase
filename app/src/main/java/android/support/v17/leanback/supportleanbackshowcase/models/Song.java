@@ -18,6 +18,7 @@ package android.support.v17.leanback.supportleanbackshowcase.models;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.v17.leanback.supportleanbackshowcase.R;
+import android.support.v17.leanback.widget.AbstractMediaItemPresenter;
 import android.support.v17.leanback.widget.BaseOnItemViewSelectedListener;
 import android.support.v17.leanback.widget.MultiActionsProvider;
 import android.support.v17.leanback.widget.Row;
@@ -41,6 +42,7 @@ public class Song implements MultiActionsProvider {
     @SerializedName("duration") private String mDuration = null;
     @SerializedName("number") private int mNumber = 0;
     @SerializedName("favorite") private boolean mFavorite = false;
+    private int mPlayState = AbstractMediaItemPresenter.PLAY_STATE_INITIAL;
 
     private MultiAction[] mMediaRowActions;
 
@@ -91,6 +93,15 @@ public class Song implements MultiActionsProvider {
 
     public void setFavorite(boolean favorite) {
         mFavorite = favorite;
+    }
+
+
+    public int getPlayState() {
+        return mPlayState;
+    }
+
+    public void setPlayState(int playState) {
+        mPlayState = playState;
     }
 
     public int getFileResource(Context context) {

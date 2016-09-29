@@ -14,11 +14,15 @@
 
 package android.support.v17.leanback.supportleanbackshowcase.app.media;
 
-import android.app.Fragment;
+import android.os.Build;
+import android.support.v17.leanback.app.PlaybackControlGlue;
+import android.support.v17.leanback.app.PlaybackControlSupportGlue;
+import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.media.session.MediaSession;
 import android.os.Bundle;
 import android.support.v17.leanback.app.PlaybackOverlayFragment;
+import android.support.v17.leanback.app.PlaybackOverlaySupportFragment;
 import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.OnItemViewClickedListener;
@@ -33,7 +37,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 
-public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment implements
+public class VideoConsumptionExampleFragment extends PlaybackOverlaySupportFragment implements
         OnItemViewClickedListener, MediaPlayerGlue.OnMediaStateChangeListener {
 
     private static final String URL = "http://techslides.com/demos/sample-videos/small.mp4";
@@ -45,7 +49,7 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mGlue = new VideoMediaPlayerGlue(getActivity(), this) {
+        mGlue = new VideoMediaPlayerGlue(getActivity(), this, getActivity()) {
 
             @Override
             protected void onRowChanged(PlaybackControlsRow row) {
@@ -113,7 +117,8 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
             currentMetaData.setMediaSourcePath(URL);
         }
         mGlue.setOnMediaFileFinishedPlayingListener(this);
-        mGlue.prepareIfNeededAndPlay(currentMetaData);
+        mGlue.prepareIfNeededAndPlay(PlaybackControlSupportGlue.PLAYBACK_SPEED_NORMAL,
+                currentMetaData);
     }
 
     @Override
@@ -121,13 +126,14 @@ public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment imp
         // Enabling the video stay visible and play in the background when home screen is pressed.
         // (gregarious mode)
         if (mGlue.isMediaPlaying()) {
-            boolean isVisibleBehind = getActivity().requestVisibleBehind(true);
+            boolean isVisibleBehind = (Build.VERSION.SDK_INT >= 21) &&
+                    getActivity().requestVisibleBehind(true);
             boolean isPictureInPictureMode = VideoExampleActivity.supportsPictureInPicture(
                     getContext()) && getActivity().isInPictureInPictureMode();
             if (!isVisibleBehind && !isPictureInPictureMode) {
                 mGlue.pausePlayback();
             }
-        } else {
+        } else if (Build.VERSION.SDK_INT >= 21) {
             getActivity().requestVisibleBehind(false);
         }
         super.onPause();

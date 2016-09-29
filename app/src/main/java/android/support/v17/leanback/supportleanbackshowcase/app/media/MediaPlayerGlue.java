@@ -20,21 +20,19 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v17.leanback.app.PlaybackControlGlue;
-import android.support.v17.leanback.app.PlaybackOverlayFragment;
+import android.support.v17.leanback.app.PlaybackControlSupportGlue;
+import android.support.v17.leanback.app.PlaybackOverlaySupportFragment;
 import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ControlButtonPresenterSelector;
-import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.PlaybackControlsRow;
 import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
-import android.support.v17.leanback.widget.Presenter;
-import android.support.v17.leanback.widget.Row;
-import android.support.v17.leanback.widget.RowPresenter;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.support.v4.app.FragmentActivity;
 
 /**
  * This glue extends the {@link PlaybackControlGlue} with a {@link MediaPlayer} synchronization.
@@ -49,25 +47,28 @@ import android.view.View;
  * android.support.v17.leanback.widget.PlaybackControlsRow.ThumbsUpAction}</li> </ul>
  * <p/>
  */
-public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
-        OnItemViewSelectedListener {
+public abstract class MediaPlayerGlue extends PlaybackControlSupportGlue {
 
-    public static final int FAST_FORWARD_REWIND_STEP = 10 * 1000; // in milliseconds
-    public static final int FAST_FORWARD_REWIND_REPEAT_DELAY = 200; // in milliseconds
     private static final String TAG = "MusicMediaPlayerGlue";
     protected final PlaybackControlsRow.ThumbsDownAction mThumbsDownAction;
     protected final PlaybackControlsRow.ThumbsUpAction mThumbsUpAction;
     private final Context mContext;
+    protected FragmentActivity mActivity;
     private final PlaybackControlsRow.RepeatAction mRepeatAction;
     private final PlaybackControlsRow.ShuffleAction mShuffleAction;
     protected PlaybackControlsRow mControlsRow;
     private static final int REFRESH_PROGRESS = 1;
+    private int mSpeed = PLAYBACK_SPEED_PAUSED;
+    private long mLastTimeUpdate = 0;
+    private int mLastPosition = 0;
+    private static final int[] sFastForwardSpeeds = {5, 10, 20};
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case REFRESH_PROGRESS:
                     updateProgress();
+                    updateCurrentPosition();
                     queueNextRefresh();
             }
         }
@@ -75,14 +76,15 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
 
     protected boolean mInitialized = false; // true when the MediaPlayer is prepared/initialized
     protected OnMediaStateChangeListener mMediaFileStateChangeListener;
-    private Action mSelectedAction; // the action which is currently selected by the user
     private long mLastKeyDownEvent = 0L; // timestamp when the last DPAD_CENTER KEY_DOWN occurred
 
     protected MediaMetaData mMediaMetaData = null;
 
-    public MediaPlayerGlue(Context context, PlaybackOverlayFragment fragment) {
-        super(context, fragment, new int[]{1});
+    public MediaPlayerGlue(Context context, PlaybackOverlaySupportFragment fragment,
+                           FragmentActivity activity) {
+        super(context, fragment, sFastForwardSpeeds);
         mContext = context;
+        mActivity = activity;
         // Instantiate secondary actions
         mShuffleAction = new PlaybackControlsRow.ShuffleAction(mContext);
         mRepeatAction = new PlaybackControlsRow.RepeatAction(mContext);
@@ -90,9 +92,6 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
         mThumbsUpAction = new PlaybackControlsRow.ThumbsUpAction(mContext);
         mThumbsDownAction.setIndex(PlaybackControlsRow.ThumbsAction.OUTLINE);
         mThumbsUpAction.setIndex(PlaybackControlsRow.ThumbsAction.OUTLINE);
-
-        // Register selected listener such that we know what action the user currently has focused.
-        fragment.setOnItemViewSelectedListener(this);
     }
 
 
@@ -182,31 +181,41 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
         onMetadataChanged();
     }
 
-    @Override public boolean onKey(View v, int keyCode, KeyEvent event) {
-        // This method is overridden in order to make implement fast forwarding and rewinding when
-        // the user keeps the corresponding action pressed.
-        // We only consume DPAD_CENTER Action_DOWN events on the Fast-Forward and Rewind action and
-        // only if it has not been pressed in the last X milliseconds.
-        boolean consume = mSelectedAction instanceof PlaybackControlsRow.RewindAction;
-        consume = consume || mSelectedAction instanceof PlaybackControlsRow.FastForwardAction;
-        consume = consume && mInitialized;
-        consume = consume && event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER;
-        consume = consume && event.getAction() == KeyEvent.ACTION_DOWN;
-        consume = consume && System
-                .currentTimeMillis() - mLastKeyDownEvent > FAST_FORWARD_REWIND_REPEAT_DELAY;
-        if (consume) {
-            mLastKeyDownEvent = System.currentTimeMillis();
-            int newPosition = getCurrentPosition() + FAST_FORWARD_REWIND_STEP;
-            if (mSelectedAction instanceof PlaybackControlsRow.RewindAction) {
-                newPosition = getCurrentPosition() - FAST_FORWARD_REWIND_STEP;
-            }
-            // Make sure the new calculated duration is in the range 0 >= X >= MediaDuration
-            if (newPosition < 0) newPosition = 0;
-            if (newPosition > getMediaDuration()) newPosition = getMediaDuration();
-            seekTo(newPosition);
-            return true;
-        }
+    @Override
+    public boolean onKey(View v, int keyCode, KeyEvent event) {
         return super.onKey(v, keyCode, event);
+    }
+
+    public int updateCurrentPosition() {
+        long currentTimeMillis = System.currentTimeMillis();
+        int newPosition = getCurrentPosition();
+        if (mSpeed >= PLAYBACK_SPEED_FAST_L0 || mSpeed <= -PLAYBACK_SPEED_FAST_L0) {
+            // only update the current position if we are in fast-forward or rewind mode
+            int speed = 0;
+            if (mSpeed >= PLAYBACK_SPEED_FAST_L0) {
+                speed = getFastForwardSpeeds()[mSpeed - PLAYBACK_SPEED_FAST_L0];
+            } else if (mSpeed <= -PLAYBACK_SPEED_FAST_L0) {
+                speed = -getRewindSpeeds()[-mSpeed - PLAYBACK_SPEED_FAST_L0];
+            }
+            newPosition = mLastPosition + (int) (currentTimeMillis - mLastTimeUpdate) * speed;
+            if (newPosition < 0) {
+                newPosition = 0;
+            }
+            if (newPosition > getMediaDuration()) {
+                newPosition = getMediaDuration();
+            }
+            seekTo(newPosition);
+            // We need to pause the playback to avoid the constant media attempt to play the video
+            // while doing fast-forward or rewind. At the same time, we want to let the
+            // PlaybackControlGlue know that the media is still playing and the progress bar needs
+            // to be updated.
+            int oldSpeed = mSpeed;
+            pausePlayback();
+            mSpeed = oldSpeed;
+        }
+        mLastTimeUpdate = currentTimeMillis;
+        mLastPosition = newPosition;
+        return 0;
     }
 
     @Override public boolean hasValidMedia() {
@@ -224,19 +233,17 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
 
     @Override public Drawable getMediaArt() {
         return (hasValidMedia() && mMediaMetaData.getMediaAlbumArtResId() != 0) ?
-                getContext().getResources().
-                        getDrawable(mMediaMetaData.getMediaAlbumArtResId(), null)
+                getContext().getResources().getDrawable(mMediaMetaData.getMediaAlbumArtResId())
                 : null;
     }
 
     @Override public long getSupportedActions() {
-        return PlaybackControlGlue.ACTION_PLAY_PAUSE | PlaybackControlGlue.ACTION_FAST_FORWARD
-                | PlaybackControlGlue.ACTION_REWIND;
+        return PlaybackControlSupportGlue.ACTION_PLAY_PAUSE | PlaybackControlSupportGlue.ACTION_FAST_FORWARD
+                | PlaybackControlSupportGlue.ACTION_REWIND;
     }
 
     @Override public int getCurrentSpeedId() {
-        // 0 = Pause, 1 = Normal Playback Speed
-        return isMediaPlaying() ? 1 : 0;
+        return mSpeed;
     }
 
     @Override protected void skipToNext() {
@@ -245,6 +252,25 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
 
     @Override protected void skipToPrevious() {
         // Not supported.
+    }
+
+    /**
+     * Callback called after the current media item finishes playing.
+     */
+    void onMediaItemComplete() {
+        // Depending on the app's need we can either reset or not reset the playing speed when
+        // the current song finishes playing.
+        mSpeed = PLAYBACK_SPEED_NORMAL;
+        mLastPosition = 0;
+        mLastTimeUpdate = System.currentTimeMillis();
+    }
+
+    /**
+     * Callback called after the entire medialist finishes playing.
+     */
+    void onMediaListComplete() {
+        onMediaItemComplete();
+        mSpeed = PLAYBACK_SPEED_PAUSED;
     }
 
     protected abstract void seekTo(int newPosition);
@@ -257,7 +283,20 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
      * different states when setting a data source and preparing it to be played.
      */
     public void startPlayback() throws IllegalStateException {
+        mSpeed = PLAYBACK_SPEED_NORMAL;
         startPlayback(1);
+    }
+
+    @Override
+    protected void startPlayback(int speed) {
+        mSpeed = speed;
+        mLastPosition = getCurrentPosition();
+        mLastTimeUpdate = System.currentTimeMillis();
+    }
+
+    @Override
+    protected void pausePlayback() {
+        mSpeed = PLAYBACK_SPEED_PAUSED;
     }
 
     /**
@@ -290,27 +329,15 @@ public abstract class MediaPlayerGlue extends PlaybackControlGlue implements
         onMetadataChanged();
     }
 
-    /**
-     * This is a listener implementation for the {@link OnItemViewSelectedListener} of the {@link
-     * PlaybackOverlayFragment}. This implementation is required in order to detect KEY_DOWN events
-     * on the {@link android.support.v17.leanback.widget.PlaybackControlsRow.FastForwardAction} and
-     * {@link android.support.v17.leanback.widget.PlaybackControlsRow.RewindAction}. Thus you should
-     * <u>NOT</u> set another {@link OnItemViewSelectedListener} on your {@link
-     * PlaybackOverlayFragment}. Instead, override this method and call its super (this)
-     * implementation.
-     *
-     * @see OnItemViewSelectedListener#onItemSelected(Presenter.ViewHolder, Object,
-     * RowPresenter.ViewHolder, Row)
-     */
-    @Override public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
-                                         RowPresenter.ViewHolder rowViewHolder, Row row) {
-        if (item instanceof Action) {
-            mSelectedAction = (Action) item;
-        } else {
-            mSelectedAction = null;
+    @Override
+    public int getUpdatePeriod() {
+        int totalTime = getControlsRow().getTotalTime();
+        Fragment fragment = getFragment();
+        if (fragment.getView() == null || fragment.getView().getWidth() == 0 || totalTime <= 0) {
+            return 1000;
         }
+        return Math.max(16, totalTime / fragment.getView().getWidth());
     }
-
 
     /**
      * A listener which will be called whenever a media item's playback status changes.
