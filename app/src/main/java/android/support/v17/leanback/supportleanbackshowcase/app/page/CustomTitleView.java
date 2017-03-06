@@ -51,6 +51,11 @@ public class CustomTitleView extends RelativeLayout implements TitleViewAdapter.
         }
 
         @Override
+        public void setOnSearchClickedListener(OnClickListener listener) {
+            mSearchOrbView.setOnClickListener(listener);
+        }
+
+        @Override
         public void updateComponentsVisibility(int flags) {
             /*if ((flags & BRANDING_VIEW_VISIBLE) == BRANDING_VIEW_VISIBLE) {
                 updateBadgeVisibility(true);
