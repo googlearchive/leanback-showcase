@@ -23,7 +23,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
 
 /**
  * This Presenter will display a card consisting of an image on the left side of the card followed
@@ -57,7 +57,10 @@ public class SideInfoCardPresenter extends AbstractCardPresenter<BaseCardView> {
             int resourceId = getContext().getResources()
                     .getIdentifier(card.getLocalImageResourceName(),
                             "drawable", getContext().getPackageName());
-            Picasso.with(getContext()).load(resourceId).resize(width, height).centerCrop()
+            Glide.with(getContext())
+                    .load(resourceId)
+                    .asBitmap()
+                    .override(width, height)
                     .into(imageView);
         }
 

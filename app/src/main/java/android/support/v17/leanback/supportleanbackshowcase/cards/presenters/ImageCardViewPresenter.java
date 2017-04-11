@@ -15,15 +15,12 @@
 package android.support.v17.leanback.supportleanbackshowcase.cards.presenters;
 
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v17.leanback.supportleanbackshowcase.models.Card;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.view.ContextThemeWrapper;
 
-import android.view.View;
-import android.widget.Toast;
-import com.squareup.picasso.Picasso;
+import com.bumptech.glide.Glide;
 
 /**
  * A very basic {@link ImageCardView} {@link android.support.v17.leanback.widget.Presenter}.You can
@@ -61,7 +58,10 @@ public class ImageCardViewPresenter extends AbstractCardPresenter<ImageCardView>
             int resourceId = getContext().getResources()
                     .getIdentifier(card.getLocalImageResourceName(),
                             "drawable", getContext().getPackageName());
-            Picasso.with(getContext()).load(resourceId).into(cardView.getMainImageView());
+            Glide.with(getContext())
+                    .load(resourceId)
+                    .asBitmap()
+                    .into(cardView.getMainImageView());
         }
     }
 
