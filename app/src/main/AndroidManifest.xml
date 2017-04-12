@@ -54,6 +54,10 @@
             android:exported="true"
             android:theme="@style/Theme.Example.LeanbackDetails"/>
         <activity
+            android:name=".app.details.DetailViewExampleWithVideoBackgroundActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Example.LeanbackDetails"/>
+        <activity
             android:name=".app.cards.CardExampleActivity"
             android:exported="true"
             android:theme="@style/Theme.Example.LeanbackBrowse"/>

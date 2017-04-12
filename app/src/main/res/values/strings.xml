@@ -25,7 +25,11 @@
     <string name="grid_example_title">Image Grid Example</string>
     <string name="video_grid_example_title">Video Grid Example</string>
     <string name="videos_url">https://storage.googleapis.com/android-tv/android_tv_videos_new.json</string>
+    <string name="action_play">Play </string>
+    <string name="action_play_not_ready">The video is still being downloaded. Please wait and try
+            later.</string>
     <string name="action_buy">Buy </string>
+    <string name="action_rent">Rent </string>
     <string name="action_wishlist">Add to wishlist</string>
     <string name="action_related">Related</string>
     <string name="header_related">Related Items</string>
@@ -54,7 +58,7 @@
     <string name="wizard_example_rent">Rent</string>
     <string name="wizard_example_rent_hd">Rent HD</string>
     <string name="wizard_example_rent_sd">Rent SD</string>
-    <string name="wizard_example_processing">Processinig...</string>
+    <string name="wizard_example_processing">Processing...</string>
     <string name="wizard_example_watch_now">Watch now</string>
     <string name="wizard_example_later">Later</string>
     <string name="wizard_example_watch_now_clicked">\'Watch now\' clicked.</string>

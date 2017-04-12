@@ -28,5 +28,12 @@ public class DetailViewExampleActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_example);
+
+        if (savedInstanceState == null) {
+            DetailViewExampleFragment fragment = new DetailViewExampleFragment();
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.details_fragment, fragment)
+                    .commit();
+        }
     }
 }

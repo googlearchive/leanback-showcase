@@ -14,18 +14,23 @@
 
 package android.support.v17.leanback.supportleanbackshowcase.app.details;
 
-import android.graphics.BitmapFactory;
+import android.app.Activity;
+import android.app.Fragment;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v17.leanback.app.DetailsFragment;
 import android.support.v17.leanback.app.DetailsFragmentBackgroundController;
 import android.support.v17.leanback.media.MediaPlayerGlue;
-import android.support.v17.leanback.supportleanbackshowcase.models.DetailedCard;
 import android.support.v17.leanback.supportleanbackshowcase.R;
-import android.support.v17.leanback.supportleanbackshowcase.utils.CardListRow;
-import android.support.v17.leanback.supportleanbackshowcase.utils.Utils;
+import android.support.v17.leanback.supportleanbackshowcase.app.wizard.WizardExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.cards.presenters.CardPresenterSelector;
 import android.support.v17.leanback.supportleanbackshowcase.models.Card;
+import android.support.v17.leanback.supportleanbackshowcase.models.DetailedCard;
+import android.support.v17.leanback.supportleanbackshowcase.models.Movie;
+import android.support.v17.leanback.supportleanbackshowcase.utils.CardListRow;
+import android.support.v17.leanback.supportleanbackshowcase.utils.Utils;
 import android.support.v17.leanback.widget.Action;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
 import android.support.v17.leanback.widget.ClassPresenterSelector;
@@ -40,6 +45,7 @@ import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -49,20 +55,23 @@ import com.google.gson.Gson;
 /**
  * Displays a card with more details using a {@link DetailsFragment}.
  */
-public class DetailViewExampleFragment extends DetailsFragment implements OnItemViewClickedListener,
+public class DetailViewExampleWithVideoBackgroundFragment extends DetailsFragment implements OnItemViewClickedListener,
         OnItemViewSelectedListener {
 
     public static final String TRANSITION_NAME = "t_for_transition";
     public static final String EXTRA_CARD = "card";
 
-    private static final long ACTION_BUY = 1;
-    private static final long ACTION_WISHLIST = 2;
-    private static final long ACTION_RELATED = 3;
+    private static final long ACTION_PLAY = 1;
+    private static final long ACTION_RENT = 2;
+    private static final long ACTION_WISHLIST = 3;
+    private static final long ACTION_RELATED = 4;
 
-    private Action mActionBuy;
+    private Action mActionPlay;
+    private Action mActionRent;
     private Action mActionWishList;
     private Action mActionRelated;
     private ArrayObjectAdapter mRowsAdapter;
+    private DetailedCard data;
     private MediaPlayerGlue mMediaPlayerGlue;
     private final DetailsFragmentBackgroundController mDetailsBackground =
             new DetailsFragmentBackgroundController(this);
@@ -79,7 +88,7 @@ public class DetailViewExampleFragment extends DetailsFragment implements OnItem
         // anywhere in a real world app, e.g. a server.
         String json = Utils
                 .inputStreamToString(getResources().openRawResource(R.raw.detail_example));
-        DetailedCard data = new Gson().fromJson(json, DetailedCard.class);
+        data = new Gson().fromJson(json, DetailedCard.class);
 
         // Setup fragment
         setTitle(getString(R.string.detail_view_title));
@@ -131,11 +140,12 @@ public class DetailViewExampleFragment extends DetailsFragment implements OnItem
         detailsOverview.setImageDrawable(getResources().getDrawable(imageResId, null));
         ArrayObjectAdapter actionAdapter = new ArrayObjectAdapter();
 
-        mActionBuy = new Action(ACTION_BUY, getString(R.string.action_buy) + data.getPrice());
+        mActionPlay = new Action(ACTION_PLAY, getString(R.string.action_play));
+        mActionRent = new Action(ACTION_RENT, getString(R.string.action_rent));
         mActionWishList = new Action(ACTION_WISHLIST, getString(R.string.action_wishlist));
         mActionRelated = new Action(ACTION_RELATED, getString(R.string.action_related));
 
-        actionAdapter.add(mActionBuy);
+        actionAdapter.add(mActionRent);
         actionAdapter.add(mActionWishList);
         actionAdapter.add(mActionRelated);
         detailsOverview.setActionsAdapter(actionAdapter);
@@ -161,13 +171,27 @@ public class DetailViewExampleFragment extends DetailsFragment implements OnItem
                 startEntranceTransition();
             }
         }, 500);
-        initializeBackground(data);
+        initializeBackground();
     }
 
-    private void initializeBackground(DetailedCard data) {
+    private void initializeBackground() {
         mDetailsBackground.enableParallax();
-        mDetailsBackground.setCoverBitmap(BitmapFactory.decodeResource(getResources(),
-                R.drawable.background_canyon));
+
+        mMediaPlayerGlue = new MediaPlayerGlue(getActivity());
+        mDetailsBackground.setupVideoPlayback(mMediaPlayerGlue);
+
+        mMediaPlayerGlue.setTitle(data.getTitle().concat(" (Trailer)"));
+        mMediaPlayerGlue.setArtist(data.getDescription());
+        mMediaPlayerGlue.setVideoUrl(data.getTrailerUrl());
+    }
+
+    private void playMainVideoOnBackground() {
+        mMediaPlayerGlue.setTitle(data.getTitle() + " (Main Video)");
+        mMediaPlayerGlue.setArtist(data.getDescription());
+        mMediaPlayerGlue.setMediaSource(Uri.parse(data.getVideoUrl()));
+
+        Fragment mVideoFragment = mDetailsBackground.findOrCreateVideoFragment();
+        mVideoFragment.getView().requestFocus();
     }
 
     private void setupEventListeners() {
@@ -175,13 +199,38 @@ public class DetailViewExampleFragment extends DetailsFragment implements OnItem
         setOnItemViewClickedListener(this);
     }
 
+    private void startWizardActivityForPayment() {
+        Intent intent = new Intent(getActivity(),
+                WizardExampleActivity.class);
+
+        // Prepare extras which contains the Movie and will be passed to the Activity
+        // which is started through the Intent.
+        Bundle extras = new Bundle();
+        String json = Utils.inputStreamToString(
+                getResources().openRawResource(R.raw.wizard_example));
+        Movie movie = new Gson().fromJson(json, Movie.class);
+        extras.putSerializable("movie", movie);
+        intent.putExtras(extras);
+
+
+        Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity())
+                .toBundle();
+        startActivityForResult(intent,
+                DetailViewExampleWithVideoBackgroundActivity.BUY_MOVIE_REQUEST, bundle);
+    }
+
     @Override
     public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
                               RowPresenter.ViewHolder rowViewHolder, Row row) {
         if (!(item instanceof Action)) return;
         Action action = (Action) item;
+        long id = action.getId();
 
-        if (action.getId() == ACTION_RELATED) {
+        if (id == ACTION_RENT) {
+            startWizardActivityForPayment();
+        } else if (action.getId() == ACTION_PLAY) {
+            playMainVideoOnBackground();
+        } else if (action.getId() == ACTION_RELATED) {
             setSelectedPosition(1);
         } else {
             Toast.makeText(getActivity(), getString(R.string.action_cicked), Toast.LENGTH_LONG)
@@ -197,6 +246,35 @@ public class DetailViewExampleFragment extends DetailsFragment implements OnItem
             getView().setBackgroundColor(backgroundColor);
         } else {
             getView().setBackground(null);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent returnIntent) {
+        if (requestCode == DetailViewExampleWithVideoBackgroundActivity.BUY_MOVIE_REQUEST) {
+            if (resultCode == Activity.RESULT_OK) {
+                ArrayObjectAdapter actionAdapter = (ArrayObjectAdapter)
+                        ((DetailsOverviewRow) getAdapter().get(0)).getActionsAdapter();
+
+                actionAdapter.add(0, mActionPlay);
+                actionAdapter.remove(mActionRent);
+                setTitle(getTitle() + " (Owned)");
+
+                boolean watchNow = returnIntent
+                        .getBooleanExtra(WizardExampleActivity.WATCH_NOW,
+                                false);
+
+                if (watchNow) {
+                    // Leave a delay for playing the video in order to focus on the video fragment
+                    // after coming back from Wizard activity
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            playMainVideoOnBackground();
+                        }
+                    }, 500);
+                }
+            }
         }
     }
 }

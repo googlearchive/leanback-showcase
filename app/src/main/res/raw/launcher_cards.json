@@ -40,33 +40,40 @@
       {
         "id": 5,
         "type": "DEFAULT",
+        "title": "Detail Examples with Video Background",
+        "localImageResource": "thumbnail_example_detail",
+        "description": "Showcase of various card design and layouts"
+      },
+      {
+        "id": 6,
+        "type": "DEFAULT",
         "title": "Video consumption Examples",
         "localImageResource": "thumbnail_example_video_consumption",
         "description": "Showcase of various card design and layouts"
       },
       {
-        "id": 6,
+        "id": 7,
         "type": "DEFAULT",
         "title": "Music consumption Examples",
         "localImageResource": "thumbnail_example_music_consumption",
         "description": "Showcase of various card design and layouts"
       },
       {
-        "id": 7,
+        "id": 8,
         "type": "DEFAULT",
         "title": "Wizard Examples",
         "localImageResource": "thumbnail_example_wizard",
         "description": "Showcase of various card design and layouts"
       },
       {
-        "id": 8,
+        "id": 9,
         "type": "DEFAULT",
         "title": "Settings Examples",
         "localImageResource": "thumbnail_example_settings",
         "description": "Showcase of various card design and layouts"
       },
       {
-        "id": 9,
+        "id": 10,
         "type": "DEFAULT",
         "title": "Dialog Examples",
         "localImageResource": "thumbnail_example_dialog",

@@ -66,7 +66,6 @@
 
     <style name="Theme.Example.LeanbackDetails" parent="Theme.Leanback.Details">
         <item name="android:colorPrimary">@color/detail_view_actionbar_background</item>
-        <item name="android:windowBackground">@drawable/background_canyon</item>
      </style>
 
     <style name="Theme.Example.LeanbackMusic" parent="Theme.Example.Leanback">

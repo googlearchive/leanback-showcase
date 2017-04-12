@@ -20,6 +20,7 @@ import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v17.leanback.supportleanbackshowcase.app.cards.CardExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.details.DetailViewExampleActivity;
+import android.support.v17.leanback.supportleanbackshowcase.app.details.DetailViewExampleWithVideoBackgroundActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.dialog.DialogExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.grid.GridExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.grid.VideoGridExampleActivity;
@@ -133,15 +134,20 @@ public class MainFragment extends BrowseFragment {
                 }
                 case 5: {
                     intent = new Intent(getActivity().getBaseContext(),
-                            VideoExampleActivity.class);
+                            DetailViewExampleWithVideoBackgroundActivity.class);
                     break;
                 }
                 case 6: {
                     intent = new Intent(getActivity().getBaseContext(),
-                            MusicExampleActivity.class);
+                            VideoExampleActivity.class);
                     break;
                 }
                 case 7: {
+                    intent = new Intent(getActivity().getBaseContext(),
+                            MusicExampleActivity.class);
+                    break;
+                }
+                case 8: {
                     // Let's create a new Wizard for a given Movie. The movie can come from any sort
                     // of data source. To simplify this example we decode it from a JSON source
                     // which might be loaded from a server in a real world example.
@@ -160,13 +166,13 @@ public class MainFragment extends BrowseFragment {
                     // Finally, start the wizard Activity.
                     break;
                 }
-                case 8: {
+                case 9: {
                     intent = new Intent(getActivity().getBaseContext(),
                             SettingsExampleActivity.class);
                     startActivity(intent);
                     return;
                 }
-                case 9: {
+                case 10: {
                     intent = new Intent(getActivity().getBaseContext(),
                             DialogExampleActivity.class);
                     break;
