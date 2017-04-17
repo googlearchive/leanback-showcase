@@ -39,8 +39,7 @@ import java.util.List;
  * This example shows how to play music files and build a simple track list.
  */
 public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment implements
-        BaseOnItemViewClickedListener, BaseOnItemViewSelectedListener,
-        MediaPlayerGlue.OnMediaStateChangeListener {
+        BaseOnItemViewClickedListener, MediaPlayerGlue.OnMediaStateChangeListener {
 
     private static final String TAG = "MusicConsumptionExampleFragment";
     private static final int PLAYLIST_ACTION_ID = 0;
@@ -243,7 +242,6 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
         mRowsAdapter.addAll(2, mSongList);
         setAdapter(mRowsAdapter);
         setOnItemViewClickedListener(this);
-        setOnItemViewSelectedListener(this);
     }
 
     public MusicConsumptionExampleFragment() {
@@ -286,12 +284,6 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
 
         }
     }
-
-    @Override
-    public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
-                               RowPresenter.ViewHolder rowViewHolder, Object row) {
-    }
-
 
     public void onSongDetailsClicked(Song song) {
         int nextSongIndex = mSongList.indexOf(song);
