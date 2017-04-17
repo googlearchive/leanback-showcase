@@ -50,7 +50,6 @@ import android.support.v17.leanback.widget.RowPresenter;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +63,7 @@ import java.util.List;
  * <p/>
  */
 public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
-        OnItemViewSelectedListener, MusicPlaybackService.ServiceCallback {
+        MusicPlaybackService.ServiceCallback {
 
     public static final int FAST_FORWARD_REWIND_STEP = 10 * 1000; // in milliseconds
     public static final int FAST_FORWARD_REWIND_REPEAT_DELAY = 200; // in milliseconds
@@ -493,7 +492,6 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
         }
     }
 
-
     /**
      * This is a listener implementation for the {@link OnItemViewSelectedListener} of the {@link
      * PlaybackOverlayFragment}. This implementation is required in order to detect KEY_DOWN events
@@ -506,13 +504,13 @@ public abstract class MusicMediaPlayerGlue extends MediaPlayerGlue implements
      * @see OnItemViewSelectedListener#onItemSelected(Presenter.ViewHolder, Object,
      * RowPresenter.ViewHolder, Row)
      */
-    @Override public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
-                                         RowPresenter.ViewHolder rowViewHolder, Row row) {
+    @Override
+    public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
+            RowPresenter.ViewHolder rowViewHolder, Row row) {
         if (item instanceof Action) {
             mSelectedAction = (Action) item;
         } else {
             mSelectedAction = null;
         }
     }
-
 }
