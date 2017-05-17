@@ -22,14 +22,10 @@ public class MediaUtils {
      */
     // If the playback is in the process of preparing a media
     public static final int MEDIA_STATE_PREPARING = 0;
-    // If the media is prepared by playback
-    public static final int MEDIA_STATE_PREPARED = 1;
     // If the media is currently playing
-    public static final int MEDIA_STATE_PLAYING = 2;
+    public static final int MEDIA_STATE_PLAYING = 1;
     // If the media is currently paused
-    public static final int MEDIA_STATE_PAUSED = 3;
-    // If the media item is finished playing
-    public static final int MEDIA_STATE_COMPLETED = 4;
+    public static final int MEDIA_STATE_PAUSED = 2;
     // If the entire playlist is finished playing (no repeat buttons are enabled in this case)
-    public static final int MEDIA_STATE_MEDIALIST_COMPLETED = 5;
+    public static final int MEDIA_STATE_MEDIALIST_COMPLETED = 3;
 }

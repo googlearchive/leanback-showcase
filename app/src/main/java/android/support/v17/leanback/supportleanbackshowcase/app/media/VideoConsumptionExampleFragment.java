@@ -14,161 +14,88 @@
 
 package android.support.v17.leanback.supportleanbackshowcase.app.media;
 
-import android.app.Fragment;
-import android.content.Intent;
-import android.media.session.MediaSession;
+import android.content.Context;
+import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Bundle;
-import android.support.v17.leanback.app.PlaybackOverlayFragment;
-import android.support.v17.leanback.widget.Action;
-import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.OnItemViewClickedListener;
+import android.support.v17.leanback.app.VideoFragment;
+import android.support.v17.leanback.app.VideoFragmentGlueHost;
+import android.support.v17.leanback.media.MediaPlayerAdapter;
+import android.support.v17.leanback.media.PlaybackGlue;
+import android.support.v17.leanback.media.PlaybackTransportControlGlue;
 import android.support.v17.leanback.widget.PlaybackControlsRow;
-import android.support.v17.leanback.widget.PlaybackControlsRowPresenter;
-import android.support.v17.leanback.widget.Presenter;
-import android.support.v17.leanback.widget.Row;
-import android.support.v17.leanback.widget.RowPresenter;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 
 
-public class VideoConsumptionExampleFragment extends PlaybackOverlayFragment implements
-        OnItemViewClickedListener, MediaPlayerGlue.OnMediaStateChangeListener {
+public class VideoConsumptionExampleFragment extends VideoFragment {
 
-    private static final String URL = "http://techslides.com/demos/sample-videos/small.mp4";
-    public static final String TAG = "VideoConsumptionExampleFragment";
-    private ArrayObjectAdapter mRowsAdapter;
-    private VideoMediaPlayerGlue mGlue;
+    private static final String URL = "https://storage.googleapis.com/android-tv/Sample videos/"
+            + "April Fool's 2013/Explore Treasure Mode with Google Maps.mp4";
+    public static final String TAG = "VideoConsumption";
+    private VideoMediaPlayerGlue<MediaPlayerAdapter> mMediaPlayerGlue;
+    final VideoFragmentGlueHost mHost = new VideoFragmentGlueHost(this);
+
+    static void playWhenReady(PlaybackGlue glue) {
+        if (glue.isPrepared()) {
+            glue.play();
+        } else {
+            glue.addPlayerCallback(new PlaybackGlue.PlayerCallback() {
+                @Override
+                public void onPreparedStateChanged(PlaybackGlue glue) {
+                    if (glue.isPrepared()) {
+                        glue.removePlayerCallback(this);
+                        glue.play();
+                    }
+                }
+            });
+        }
+    }
+
+    AudioManager.OnAudioFocusChangeListener mOnAudioFocusChangeListener
+            = new AudioManager.OnAudioFocusChangeListener() {
+        @Override
+        public void onAudioFocusChange(int state) {
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mGlue = new VideoMediaPlayerGlue(getActivity(), this) {
+        mMediaPlayerGlue = new VideoMediaPlayerGlue(getActivity(),
+                new MediaPlayerAdapter(getActivity()));
+        mMediaPlayerGlue.setHost(mHost);
+        AudioManager audioManager = (AudioManager) getActivity()
+                .getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager.requestAudioFocus(mOnAudioFocusChangeListener, AudioManager.STREAM_MUSIC,
+                AudioManager.AUDIOFOCUS_GAIN) != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            Log.w(TAG, "video player cannot obtain audio focus!");
+        }
 
-            @Override
-            protected void onRowChanged(PlaybackControlsRow row) {
-                if (mRowsAdapter == null) return;
-                mRowsAdapter.notifyArrayItemRangeChanged(0, 1);
-            }
-        };
-
-
-
-        Fragment videoSurfaceFragment = getFragmentManager()
-                .findFragmentByTag(VideoSurfaceFragment.TAG);
-
-        SurfaceView surface = (SurfaceView) videoSurfaceFragment.getView();
-        surface.getHolder().addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                mGlue.setDisplay(holder);
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                // Nothing to do
-            }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                mGlue.resetPlayer();
-                mGlue.releaseMediaSession();
-                // Set a null surface holder to keep the mediaplayer state sane in between surfaceDestroyed
-                // and the next call to surfaceCreated..
-                // Otherwise, the mediaplayer will have an invalid state resulting from
-                // invalid display state when the surface is destroyed. The invalid mediastate leads
-                // to crash when returning to an stopped playback activity since onResume
-                // calls prepareAsync on the mediaplayer while surfaceCreated hasn't been called yet.
-                mGlue.setDisplay(null);
-                mGlue.enableProgressUpdating(false);;
-            }
-        });
-        setBackgroundType(PlaybackOverlayFragment.BG_LIGHT);
-        addPlaybackControlsRow();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        mGlue.enableProgressUpdating(mGlue.hasValidMedia() && mGlue.isMediaPlaying());
-        mGlue.createMediaSessionIfNeeded();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
+        mMediaPlayerGlue.setMode(PlaybackControlsRow.RepeatAction.NONE);
         MediaMetaData intentMetaData = getActivity().getIntent().getParcelableExtra(
                 VideoExampleActivity.TAG);
-        MediaMetaData currentMetaData = new MediaMetaData();
         if (intentMetaData != null) {
-            currentMetaData.setMediaTitle(intentMetaData.getMediaTitle());
-            currentMetaData.setMediaArtistName(intentMetaData.getMediaArtistName());
-            currentMetaData.setMediaSourcePath(intentMetaData.getMediaSourcePath());
-            currentMetaData.setMediaAlbumArtUrl(intentMetaData.getMediaAlbumArtUrl());
+            mMediaPlayerGlue.setTitle(intentMetaData.getMediaTitle());
+            mMediaPlayerGlue.setSubtitle(intentMetaData.getMediaArtistName());
+            mMediaPlayerGlue.getPlayerAdapter().setDataSource(
+                    Uri.parse(intentMetaData.getMediaSourcePath()));
         } else {
-            currentMetaData.setMediaTitle("Diving with Sharks");
-            currentMetaData.setMediaArtistName("A Googler");
-            currentMetaData.setMediaSourcePath(URL);
+            mMediaPlayerGlue.setTitle("Diving with Sharks");
+            mMediaPlayerGlue.setSubtitle("A Googler");
+            mMediaPlayerGlue.getPlayerAdapter().setDataSource(Uri.parse(URL));
         }
-        mGlue.setOnMediaFileFinishedPlayingListener(this);
-        mGlue.prepareIfNeededAndPlay(currentMetaData);
+        PlaybackSeekDiskDataProvider.setDemoSeekProvider(mMediaPlayerGlue);
+        playWhenReady(mMediaPlayerGlue);
+        setBackgroundType(BG_LIGHT);
     }
 
     @Override
     public void onPause() {
-        // Enabling the video stay visible and play in the background when home screen is pressed.
-        // (gregarious mode)
-        if (mGlue.isMediaPlaying()) {
-            boolean isVisibleBehind = getActivity().requestVisibleBehind(true);
-            boolean isPictureInPictureMode = VideoExampleActivity.supportsPictureInPicture(
-                    getContext()) && getActivity().isInPictureInPictureMode();
-            if (!isVisibleBehind && !isPictureInPictureMode) {
-                mGlue.pausePlayback();
-            }
-        } else {
-            getActivity().requestVisibleBehind(false);
+        if (mMediaPlayerGlue != null) {
+            mMediaPlayerGlue.pause();
         }
         super.onPause();
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        mGlue.enableProgressUpdating(false);
-        mGlue.resetPlayer();
-        mGlue.releaseMediaSession();
-        mGlue.saveUIState();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mGlue.releaseMediaPlayer();
-    }
-
-    private void addPlaybackControlsRow() {
-        final PlaybackControlsRowPresenter controlsPresenter = mGlue
-                .createControlsRowAndPresenter();
-        mRowsAdapter = new ArrayObjectAdapter(controlsPresenter);
-        mRowsAdapter.add(mGlue.getControlsRow());
-        setAdapter(mRowsAdapter);
-        setOnItemViewClickedListener(this);
-    }
-
-    @Override
-    public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
-                              RowPresenter.ViewHolder rowViewHolder, Row row) {
-        if (!(item instanceof Action)) return;
-        mGlue.onActionClicked((Action) item);
-    }
-
-
-    @Override
-    public void onMediaStateChanged(MediaMetaData currentMediaMetaData, int currentMediaState) {
-        if (currentMediaState == MediaUtils.MEDIA_STATE_COMPLETED) {
-            mGlue.startPlayback();
-        }
-    }
 }

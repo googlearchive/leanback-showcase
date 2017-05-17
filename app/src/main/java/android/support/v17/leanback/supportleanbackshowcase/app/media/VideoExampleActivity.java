@@ -24,7 +24,7 @@ import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v4.os.BuildCompat;
 
 /**
- * TODO: Javadoc
+ * Activity that hosts VideoConsumptionExampleFragment.
  */
 public class VideoExampleActivity extends Activity {
 
@@ -35,13 +35,12 @@ public class VideoExampleActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video_example);
 
-        FragmentTransaction ft1 = getFragmentManager().beginTransaction();
-        ft1.replace(R.id.videoFragment, new VideoSurfaceFragment(), VideoSurfaceFragment.TAG);
-        ft1.commit();
-
-        FragmentTransaction ft2 = getFragmentManager().beginTransaction();
-        ft2.add(R.id.videoFragment, new VideoConsumptionExampleFragment(), VideoConsumptionExampleFragment.TAG);
-        ft2.commit();
+        if (savedInstanceState == null) {
+            FragmentTransaction ft = getFragmentManager().beginTransaction();
+            ft.add(R.id.videoFragment, new VideoConsumptionExampleFragment(),
+                    VideoConsumptionExampleFragment.TAG);
+            ft.commit();
+        }
     }
 
     @Override

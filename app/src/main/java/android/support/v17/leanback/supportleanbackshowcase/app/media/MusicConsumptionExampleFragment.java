@@ -19,7 +19,8 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v17.leanback.app.PlaybackOverlayFragment;
+import android.support.v17.leanback.app.PlaybackFragment;
+import android.support.v17.leanback.app.PlaybackFragmentGlueHost;
 import android.support.v17.leanback.supportleanbackshowcase.utils.Constants;
 import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v17.leanback.supportleanbackshowcase.utils.Utils;
@@ -38,47 +39,33 @@ import java.util.List;
 /**
  * This example shows how to play music files and build a simple track list.
  */
-public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment implements
-        BaseOnItemViewClickedListener, BaseOnItemViewSelectedListener,
-        MediaPlayerGlue.OnMediaStateChangeListener {
+public class MusicConsumptionExampleFragment extends PlaybackFragment implements
+        BaseOnItemViewClickedListener {
 
     private static final String TAG = "MusicConsumptionExampleFragment";
     private static final int PLAYLIST_ACTION_ID = 0;
     private static final int FAVORITE_ACTION_ID = 1;
     private ArrayObjectAdapter mRowsAdapter;
     private MusicMediaPlayerGlue mGlue;
-    private int mCurrentSongIndex = 0;
-    private Uri mCurrentMediaUri;
-    private List<Song> mSongList;
-    private boolean mAdapterNotified = false;
     private static TextView firstRowView;
-    boolean onStopCalled = false;
-    int stopCount = 1;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (Constants.LOCAL_LOGD) Log.d(TAG, "onCreate");
 
-        mGlue = new MusicMediaPlayerGlue(getActivity(), this) {
-
-            @Override protected void onRowChanged(PlaybackControlsRow row) {
-                if (mRowsAdapter == null || mAdapterNotified) return;
-                //mAdapterNotified = true;
-                mRowsAdapter.notifyArrayItemRangeChanged(0, 1);
-            }
-        };
-        mGlue.setOnMediaFileFinishedPlayingListener(this);
+        mGlue = new MusicMediaPlayerGlue(getActivity());
+        mGlue.setHost(new PlaybackFragmentGlueHost(this));
 
         String json = Utils.inputStreamToString(
                 getResources().openRawResource(R.raw.music_consumption_example));
 
 
-        mSongList = new Gson().fromJson(json, SongList.class).getSongs();
+        List<Song> songList = new Gson().fromJson(json, SongList.class).getSongs();
 
         Resources res = getActivity().getResources();
 
         // For each song add a playlist and favorite actions.
-        for(Song song : mSongList) {
+        for(Song song : songList) {
             MultiActionsProvider.MultiAction[] mediaRowActions = new
                     MultiActionsProvider.MultiAction[2];
             MultiActionsProvider.MultiAction playlistAction = new
@@ -105,13 +92,13 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
 
         List<MediaMetaData> songMetaDataList = new ArrayList<>();
         List<Uri> songUriList = new ArrayList<>();
-        for (Song song : mSongList) {
+        for (Song song : songList) {
             MediaMetaData metaData = createMetaDataFromSong(song);
             songMetaDataList.add(metaData);
         }
-        mGlue.setMediaMetaData(songMetaDataList.get(0));
         mGlue.setMediaMetaDataList(songMetaDataList);
-        addPlaybackControlsRow();
+        addPlaybackControlsRow(songList);
+        mGlue.prepareAndPlay(getUri(songList.get(0)));
     }
 
     @Override
@@ -228,22 +215,18 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
         }
     };
 
-    private void addPlaybackControlsRow() {
+    private void addPlaybackControlsRow(List<Song> songList) {
         mRowsAdapter = new ArrayObjectAdapter(new ClassPresenterSelector()
                 .addClassPresenterSelector(Song.class, new SongPresenterSelector()
                         .setSongPresenterRegular(new SongPresenter(getActivity(),
                                 R.style.Theme_Example_LeanbackMusic_RegularSongNumbers))
                         .setSongPresenterFavorite(new SongPresenter(getActivity(),
                                 R.style.Theme_Example_LeanbackMusic_FavoriteSongNumbers)))
-                .addClassPresenter(TrackListHeader.class, new TrackListHeaderPresenter())
-                .addClassPresenter(PlaybackControlsRow.class,
-                        mGlue.createControlsRowAndPresenter()));
-        mRowsAdapter.add(mGlue.getControlsRow());
+                .addClassPresenter(TrackListHeader.class, new TrackListHeaderPresenter()));
         mRowsAdapter.add(new TrackListHeader());
-        mRowsAdapter.addAll(2, mSongList);
+        mRowsAdapter.addAll(mRowsAdapter.size(), songList);
         setAdapter(mRowsAdapter);
         setOnItemViewClickedListener(this);
-        setOnItemViewSelectedListener(this);
     }
 
     public MusicConsumptionExampleFragment() {
@@ -255,10 +238,7 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
     @Override public void onItemClicked(Presenter.ViewHolder itemViewHolder, Object item,
                                         RowPresenter.ViewHolder rowViewHolder, Object row) {
 
-        if (item instanceof  Action) {
-            // if the clicked item is a primary or secondary action in the playback controller
-            mGlue.onActionClicked((Action) item);
-        } else if (row instanceof  Song) {
+        if (row instanceof  Song) {
             // if a media item row is clicked
             Song clickedSong = (Song) row;
             AbstractMediaItemPresenter.ViewHolder songRowVh =
@@ -287,55 +267,19 @@ public class MusicConsumptionExampleFragment extends PlaybackOverlayFragment imp
         }
     }
 
-    @Override
-    public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
-                               RowPresenter.ViewHolder rowViewHolder, Object row) {
-    }
-
-
     public void onSongDetailsClicked(Song song) {
-        int nextSongIndex = mSongList.indexOf(song);
-        mCurrentSongIndex = nextSongIndex;
-        startPlayback();
+        mGlue.prepareAndPlay(getUri(song));
     }
 
-    @Override
-    public void onMediaStateChanged(MediaMetaData currentMediaMetaData, int currentMediaState) {
-        Uri currentMediaUri = currentMediaMetaData.getMediaSourceUri();
-        if (mCurrentMediaUri == null || !mCurrentMediaUri.equals(currentMediaUri)) {
-            mCurrentSongIndex = findSongIndex(currentMediaUri);
-            mCurrentMediaUri = currentMediaUri;
-            if (mCurrentSongIndex == -1) {
-                throw new IllegalArgumentException("currentMediaUri not found in the song list!");
-            }
-            Song song = mSongList.get(mCurrentSongIndex);
-            MediaMetaData metaData = createMetaDataFromSong(song);
-            mGlue.setMediaMetaData(metaData);
-        }
-    }
-
-    private int findSongIndex(Uri currentMediaUri) {
-        for(int i = 0; i < mSongList.size(); i++) {
-            Uri uri = Utils.getResourceUri(getActivity(),
-                    mSongList.get(i).getFileResource(getActivity()));
-            if (uri.equals(currentMediaUri)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private void startPlayback() {
-        Song song = mSongList.get(mCurrentSongIndex);
-        MediaMetaData mediaMetaData = createMetaDataFromSong(song);
-        mGlue.prepareAndPlay(mediaMetaData);
+    private Uri getUri(Song song) {
+        return Utils.getResourceUri(getActivity(), song.getFileResource(getActivity()));
     }
 
     private MediaMetaData createMetaDataFromSong(Song song) {
         MediaMetaData mediaMetaData = new MediaMetaData();
         mediaMetaData.setMediaTitle(song.getTitle());
         mediaMetaData.setMediaArtistName(song.getDescription());
-        Uri uri = Utils.getResourceUri(getActivity(), song.getFileResource(getActivity()));
+        Uri uri = getUri(song);
         mediaMetaData.setMediaSourceUri(uri);
         mediaMetaData.setMediaAlbumArtResId(song.getImageResource(getActivity()));
         return mediaMetaData;

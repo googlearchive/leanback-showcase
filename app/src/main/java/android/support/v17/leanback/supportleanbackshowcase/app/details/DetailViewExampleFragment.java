@@ -63,7 +63,6 @@ public class DetailViewExampleFragment extends DetailsFragment implements OnItem
     private Action mActionWishList;
     private Action mActionRelated;
     private ArrayObjectAdapter mRowsAdapter;
-    private MediaPlayerGlue mMediaPlayerGlue;
     private final DetailsFragmentBackgroundController mDetailsBackground =
             new DetailsFragmentBackgroundController(this);
 

@@ -24,14 +24,15 @@ import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.MediaPlayer;
-import android.media.session.MediaSession;
-import android.media.session.PlaybackState;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v17.leanback.supportleanbackshowcase.R;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -61,7 +62,7 @@ public class MusicPlaybackService extends Service {
 
     private MediaPlayer mPlayer;
     // MediaSession created for communication between NowPlayingCard in the launcher and the current MediaPlayer state
-    private MediaSession mMediaSession;
+    private MediaSessionCompat mMediaSession;
 
     private static final String TAG = "MusicPlaybackService";
     int mCurrentMediaPosition = -1;
@@ -70,7 +71,6 @@ public class MusicPlaybackService extends Service {
     List<MediaMetaData> mMediaItemList = new ArrayList<>();
     private boolean mInitialized = false; // true when the MediaPlayer is prepared/initialized
 
-    private boolean mIsSupposedToBePreparing = false;
     private static final int FOCUS_CHANGE = 2;
 
 
@@ -113,7 +113,8 @@ public class MusicPlaybackService extends Service {
     };
 
     public interface ServiceCallback {
-        void onMediaStateChangedByPlaybackService(MediaMetaData currentMediaItem, int currentMediaState);
+        void onMediaStateChanged(int currentMediaState);
+        void onCurrentItemChanged(MediaMetaData currentMediaItem);
     }
 
     private List<ServiceCallback> mServiceCallbacks = new ArrayList<>();
@@ -126,8 +127,8 @@ public class MusicPlaybackService extends Service {
         if (mCurrentMediaItem != null) {
             // Calling onMediaStateChangedByPlaybackService on the callback to update UI on the
             // activity if they are out of sync with the playback service state.
-            serviceCallback.onMediaStateChangedByPlaybackService(
-                    mCurrentMediaItem, mCurrentMediaState);
+            serviceCallback.onCurrentItemChanged(mCurrentMediaItem);
+            serviceCallback.onMediaStateChanged(mCurrentMediaState);
         }
     }
 
@@ -145,8 +146,8 @@ public class MusicPlaybackService extends Service {
     }
 
     private void stopServiceIfNeeded() {
-        if (mServiceCallbacks.size() == 0 &&
-                mCurrentMediaState == MediaUtils.MEDIA_STATE_MEDIALIST_COMPLETED) {
+        if (mServiceCallbacks.size() == 0
+                && mCurrentMediaState == MediaUtils.MEDIA_STATE_MEDIALIST_COMPLETED) {
             Log.d(TAG, "stop " + MusicPlaybackService.this);
             stopSelf();
         }
@@ -155,7 +156,14 @@ public class MusicPlaybackService extends Service {
     private void notifyMediaStateChanged(int currentMediaState) {
         mCurrentMediaState = currentMediaState;
         for(int i = mServiceCallbacks.size() - 1; i >= 0; i--) {
-            mServiceCallbacks.get(i).onMediaStateChangedByPlaybackService(mCurrentMediaItem, currentMediaState);
+            mServiceCallbacks.get(i).onMediaStateChanged(currentMediaState);
+        }
+    }
+
+    private void notifyMediaItemChanged(MediaMetaData currentMediaItem) {
+        mCurrentMediaItem = currentMediaItem;
+        for(int i = mServiceCallbacks.size() - 1; i >= 0; i--) {
+            mServiceCallbacks.get(i).onCurrentItemChanged(mCurrentMediaItem);
         }
     }
 
@@ -175,9 +183,9 @@ public class MusicPlaybackService extends Service {
             mPlayer = new MediaPlayer();
         }
         if (mMediaSession == null) {
-            mMediaSession = new MediaSession(this, "MusicPlayer Session");
-            mMediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
-                    MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+            mMediaSession = new MediaSessionCompat(this, "MusicPlayer Session");
+            mMediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+                    MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
             mMediaSession.setCallback(new MediaSessionCallback());
             updateMediaSessionIntent();
         }
@@ -230,13 +238,11 @@ public class MusicPlaybackService extends Service {
             if (!isPlaying()) {
                 // This media item had been already playing but is being paused. Will resume the player.
                 // No need to reset the player
-                mPlayer.start();
-                updateMediaSessionPlayState();
-                notifyMediaStateChanged(MediaUtils.MEDIA_STATE_PLAYING);
+                play();
             }
         } else {
-            mCurrentMediaItem = mediaItemToPlay;
             mCurrentMediaPosition = mediaItemPos;
+            notifyMediaItemChanged(mediaItemToPlay);
             prepareNewMedia();
         }
     }
@@ -263,10 +269,7 @@ public class MusicPlaybackService extends Service {
             @Override public void onPrepared(MediaPlayer mp) {
                 updateMediaSessionMetaData();
                 mInitialized = true;
-                mPlayer.start();
-                mIsSupposedToBePreparing = false;
-                notifyMediaStateChanged(MediaUtils.MEDIA_STATE_PREPARED);
-                updateMediaSessionPlayState();
+                play();
             }
         });
         mPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
@@ -286,7 +289,7 @@ public class MusicPlaybackService extends Service {
                     // The last media item is played and repeatAll action is enabled;
                     // start over the media list from the beginning
                     mCurrentMediaPosition = 0;
-                    mCurrentMediaItem = mMediaItemList.get(0);
+                    notifyMediaItemChanged(mMediaItemList.get(mCurrentMediaPosition));
                     prepareNewMedia();
                 } else if (mRepeatState == MEDIA_ACTION_REPEAT_ONE) {
                     // repeat playing the same media item
@@ -294,7 +297,7 @@ public class MusicPlaybackService extends Service {
                 } else if (mCurrentMediaPosition < mMediaItemList.size() - 1) {
                     // Move on to playing the next media item in the list
                     mCurrentMediaPosition++;
-                    mCurrentMediaItem = mMediaItemList.get(mCurrentMediaPosition);
+                    notifyMediaItemChanged(mMediaItemList.get(mCurrentMediaPosition));
                     prepareNewMedia();
                 } else {
                     // Last media item is reached, and the service is no longer necessary;
@@ -308,7 +311,6 @@ public class MusicPlaybackService extends Service {
             }
         });
         mPlayer.prepareAsync();
-        mIsSupposedToBePreparing = true;
         notifyMediaStateChanged(MediaUtils.MEDIA_STATE_PREPARING);
     }
 
@@ -317,7 +319,7 @@ public class MusicPlaybackService extends Service {
             throw new IllegalArgumentException(
                     "mCurrentMediaItem is null in updateMediaSessionMetaData!");
         }
-        MediaMetadata.Builder metaDataBuilder = new MediaMetadata.Builder();
+        MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder();
         if (mCurrentMediaItem.getMediaTitle() != null) {
             metaDataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE,
                     mCurrentMediaItem.getMediaTitle());
@@ -339,12 +341,12 @@ public class MusicPlaybackService extends Service {
     }
 
     private void updateMediaSessionPlayState() {
-        PlaybackState.Builder playbackStateBuilder = new PlaybackState.Builder();
+        PlaybackStateCompat.Builder playbackStateBuilder = new PlaybackStateCompat.Builder();
         int playState;
         if (isPlaying()) {
-            playState = PlaybackState.STATE_PLAYING;
+            playState = PlaybackStateCompat.STATE_PLAYING;
         } else {
-            playState = PlaybackState.STATE_PAUSED;
+            playState = PlaybackStateCompat.STATE_PAUSED;
         }
         long currentPosition = getCurrentPosition();
         playbackStateBuilder.setState(playState, currentPosition, (float) 1.0).setActions(
@@ -371,16 +373,15 @@ public class MusicPlaybackService extends Service {
     /**
      * @return The available set of actions for the media session. These actions should be provided
      * for the MediaSession PlaybackState in order for
-     * {@link MediaSession.Callback#onMediaButtonEvent} to call relevant methods of onPause() or
+     * {@link MediaSessionCompat.Callback#onMediaButtonEvent} to call relevant methods of onPause() or
      * onPlay().
      */
     private long getPlaybackStateActions() {
-        return PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE |
-                PlaybackState.ACTION_FAST_FORWARD | PlaybackState.ACTION_REWIND |
-                PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS;
+        return PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
+                PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
     }
 
-    public void reset() {
+    void reset() {
         if (mPlayer != null) {
             mPlayer.reset();
             mInitialized = false;
@@ -409,6 +410,44 @@ public class MusicPlaybackService extends Service {
         }
     }
 
+    /**
+     * skip to next item
+     */
+    public void next() {
+        if (mMediaItemList.size() == 0) {
+            return;
+        }
+        if (mCurrentMediaPosition == mMediaItemList.size() - 1) {
+            // The last media item is played and repeatAll action is enabled;
+            // start over the media list from the beginning
+            mCurrentMediaPosition = 0;
+        } else {
+            // Move on to playing the next media item in the list
+            mCurrentMediaPosition++;
+        }
+        notifyMediaItemChanged(mMediaItemList.get(mCurrentMediaPosition));
+        prepareNewMedia();
+    }
+
+    /**
+     * skip to previous item
+     */
+    public void previous() {
+        if (mMediaItemList.size() == 0) {
+            return;
+        }
+        if (mCurrentMediaPosition == 0) {
+            // The last media item is played and repeatAll action is enabled;
+            // start over the media list from the beginning
+            mCurrentMediaPosition = mMediaItemList.size() - 1;
+        } else {
+            // Move on to playing the next media item in the list
+            mCurrentMediaPosition--;
+        }
+        notifyMediaItemChanged(mMediaItemList.get(mCurrentMediaPosition));
+        prepareNewMedia();
+    }
+
     public boolean isPlaying() {
         return mPlayer != null && mPlayer.isPlaying();
     }
@@ -432,10 +471,6 @@ public class MusicPlaybackService extends Service {
 
     public MediaMetaData getCurrentMediaItem() {
         return mInitialized ? mCurrentMediaItem : null;
-    }
-
-    public boolean isPreparing() {
-        return mIsSupposedToBePreparing;
     }
 
     /**
@@ -494,7 +529,7 @@ public class MusicPlaybackService extends Service {
         return mBinder;
     }
 
-    private class MediaSessionCallback extends MediaSession.Callback {
+    private class MediaSessionCallback extends MediaSessionCompat.Callback {
 
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
@@ -515,12 +550,12 @@ public class MusicPlaybackService extends Service {
 
         @Override
         public void onSkipToNext() {
-            super.onSkipToNext();
+            next();
         }
 
         @Override
         public void onSkipToPrevious() {
-            super.onSkipToPrevious();
+            previous();
         }
 
         @Override
@@ -540,7 +575,7 @@ public class MusicPlaybackService extends Service {
 
         @Override
         public void onSeekTo(long pos) {
-            super.onSeekTo(pos);
+            seekTo((int)pos);
         }
     }
 }

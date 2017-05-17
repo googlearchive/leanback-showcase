@@ -15,15 +15,17 @@
 package android.support.v17.leanback.supportleanbackshowcase.app.details;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v17.leanback.app.DetailsFragment;
 import android.support.v17.leanback.app.DetailsFragmentBackgroundController;
+import android.support.v17.leanback.media.MediaPlayerAdapter;
 import android.support.v17.leanback.media.MediaPlayerGlue;
 import android.support.v17.leanback.supportleanbackshowcase.R;
+import android.support.v17.leanback.supportleanbackshowcase.app.media.PlaybackSeekDiskDataProvider;
+import android.support.v17.leanback.supportleanbackshowcase.app.media.VideoMediaPlayerGlue;
 import android.support.v17.leanback.supportleanbackshowcase.app.wizard.WizardExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.cards.presenters.CardPresenterSelector;
 import android.support.v17.leanback.supportleanbackshowcase.models.Card;
@@ -72,7 +74,6 @@ public class DetailViewExampleWithVideoBackgroundFragment extends DetailsFragmen
     private Action mActionRelated;
     private ArrayObjectAdapter mRowsAdapter;
     private DetailedCard data;
-    private MediaPlayerGlue mMediaPlayerGlue;
     private final DetailsFragmentBackgroundController mDetailsBackground =
             new DetailsFragmentBackgroundController(this);
 
@@ -177,21 +178,25 @@ public class DetailViewExampleWithVideoBackgroundFragment extends DetailsFragmen
     private void initializeBackground() {
         mDetailsBackground.enableParallax();
 
-        mMediaPlayerGlue = new MediaPlayerGlue(getActivity());
-        mDetailsBackground.setupVideoPlayback(mMediaPlayerGlue);
+        MediaPlayerGlue playerGlue = new MediaPlayerGlue(getActivity());
+        mDetailsBackground.setupVideoPlayback(playerGlue);
 
-        mMediaPlayerGlue.setTitle(data.getTitle().concat(" (Trailer)"));
-        mMediaPlayerGlue.setArtist(data.getDescription());
-        mMediaPlayerGlue.setVideoUrl(data.getTrailerUrl());
+        playerGlue.setTitle(data.getTitle().concat(" (Trailer)"));
+        playerGlue.setArtist(data.getDescription());
+        playerGlue.setVideoUrl(data.getTrailerUrl());
     }
 
     private void playMainVideoOnBackground() {
-        mMediaPlayerGlue.setTitle(data.getTitle() + " (Main Video)");
-        mMediaPlayerGlue.setArtist(data.getDescription());
-        mMediaPlayerGlue.setMediaSource(Uri.parse(data.getVideoUrl()));
+        VideoMediaPlayerGlue<MediaPlayerAdapter> playerGlue = new VideoMediaPlayerGlue(
+                getActivity(), new MediaPlayerAdapter(getActivity()));
 
-        Fragment mVideoFragment = mDetailsBackground.findOrCreateVideoFragment();
-        mVideoFragment.getView().requestFocus();
+        mDetailsBackground.setupVideoPlayback(playerGlue);
+        playerGlue.setTitle(data.getTitle() + " (Main Video)");
+        playerGlue.setSubtitle(data.getDescription());
+        playerGlue.getPlayerAdapter().setDataSource(Uri.parse(data.getVideoUrl()));
+        PlaybackSeekDiskDataProvider.setDemoSeekProvider(playerGlue);
+
+        mDetailsBackground.switchToVideo();
     }
 
     private void setupEventListeners() {
