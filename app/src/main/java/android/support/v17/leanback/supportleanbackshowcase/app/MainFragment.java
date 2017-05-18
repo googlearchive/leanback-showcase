@@ -26,6 +26,7 @@ import android.support.v17.leanback.supportleanbackshowcase.app.grid.GridExample
 import android.support.v17.leanback.supportleanbackshowcase.app.grid.VideoGridExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.media.MusicExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.media.VideoExampleActivity;
+import android.support.v17.leanback.supportleanbackshowcase.app.media.VideoExampleWithExoPlayerActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.page.PageAndListRowActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.settings.SettingsExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.wizard.WizardExampleActivity;
@@ -35,7 +36,6 @@ import android.support.v17.leanback.supportleanbackshowcase.models.CardRow;
 import android.support.v17.leanback.supportleanbackshowcase.models.Movie;
 import android.support.v17.leanback.supportleanbackshowcase.utils.Utils;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
-import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.ListRow;
 import android.support.v17.leanback.widget.ListRowPresenter;
 import android.support.v17.leanback.widget.OnItemViewClickedListener;
@@ -144,10 +144,15 @@ public class MainFragment extends BrowseFragment {
                 }
                 case 7: {
                     intent = new Intent(getActivity().getBaseContext(),
-                            MusicExampleActivity.class);
+                            VideoExampleWithExoPlayerActivity.class);
                     break;
                 }
                 case 8: {
+                    intent = new Intent(getActivity().getBaseContext(),
+                            MusicExampleActivity.class);
+                    break;
+                }
+                case 9: {
                     // Let's create a new Wizard for a given Movie. The movie can come from any sort
                     // of data source. To simplify this example we decode it from a JSON source
                     // which might be loaded from a server in a real world example.
@@ -166,13 +171,13 @@ public class MainFragment extends BrowseFragment {
                     // Finally, start the wizard Activity.
                     break;
                 }
-                case 9: {
+                case 10: {
                     intent = new Intent(getActivity().getBaseContext(),
                             SettingsExampleActivity.class);
                     startActivity(intent);
                     return;
                 }
-                case 10: {
+                case 11: {
                     intent = new Intent(getActivity().getBaseContext(),
                             DialogExampleActivity.class);
                     break;

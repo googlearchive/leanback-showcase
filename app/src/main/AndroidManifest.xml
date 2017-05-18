@@ -77,8 +77,15 @@
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
-            android:supportsPictureInPicture="true"
-            />
+            android:supportsPictureInPicture="true"/>
+        <activity
+            android:name=".app.media.VideoExampleWithExoPlayerActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Example.Leanback"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|layoutDirection"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"/>
         <activity
             android:name=".app.media.MusicExampleActivity"
             android:exported="true"
