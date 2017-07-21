@@ -46,4 +46,7 @@
 
     <dimen name="playback_now_playing_card_width">240dp</dimen>
     <dimen name="playback_now_playing_card_height">240dp</dimen>
+    <dimen name="add_remove_margin">20dp</dimen>
+    <dimen name="card_width">192dp</dimen>
+    <dimen name="card_height">96dp</dimen>
 </resources>

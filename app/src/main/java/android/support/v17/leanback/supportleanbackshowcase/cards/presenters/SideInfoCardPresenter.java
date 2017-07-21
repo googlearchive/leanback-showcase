@@ -24,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 
 /**
  * This Presenter will display a card consisting of an image on the left side of the card followed
@@ -57,10 +58,12 @@ public class SideInfoCardPresenter extends AbstractCardPresenter<BaseCardView> {
             int resourceId = getContext().getResources()
                     .getIdentifier(card.getLocalImageResourceName(),
                             "drawable", getContext().getPackageName());
+            RequestOptions myOptions = new RequestOptions()
+                    .override(width, height);
             Glide.with(getContext())
-                    .load(resourceId)
                     .asBitmap()
-                    .override(width, height)
+                    .load(resourceId)
+                    .apply(myOptions)
                     .into(imageView);
         }
 

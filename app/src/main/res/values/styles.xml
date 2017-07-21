@@ -228,6 +228,11 @@
         <item name="imageCardViewInfoAreaStyle">@style/IconCardInfoAreaStyle</item>
     </style>
 
+    <style name="SettingIconCardTheme" parent="Theme.Leanback">
+        <item name="imageCardViewTitleStyle">@style/IconCardTitleStyle</item>
+        <item name="imageCardViewImageStyle">@style/IconCardImageStyle</item>
+        <item name="imageCardViewInfoAreaStyle">@style/IconCardInfoAreaStyle</item>
+    </style>
 
     <style name="MediaListHeaderStyle" parent="Widget.Leanback.PlaybackMediaListHeaderStyle">
         <item name="android:background">#282248</item>
@@ -270,6 +275,10 @@
     <style name="FavoriteMediaItemDurationStyle" parent="Widget.Leanback.PlaybackMediaItemDurationStyle">
         <item name="android:visibility">visible</item>
         <item name="android:textAppearance">@style/FavoriteMediaItemTextStyle</item>
+    </style>
+
+    <style name="Widget.Leanback.GuidanceIconStyle.IconWithPadding" parent="Widget.Leanback.GuidanceIconStyle">
+        <item name="android:padding">24dp</item>
     </style>
 
 </resources>

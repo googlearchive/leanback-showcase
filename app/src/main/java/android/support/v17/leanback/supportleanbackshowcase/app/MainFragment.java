@@ -28,6 +28,7 @@ import android.support.v17.leanback.supportleanbackshowcase.app.media.MusicExamp
 import android.support.v17.leanback.supportleanbackshowcase.app.media.VideoExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.media.VideoExampleWithExoPlayerActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.page.PageAndListRowActivity;
+import android.support.v17.leanback.supportleanbackshowcase.app.rows.*;
 import android.support.v17.leanback.supportleanbackshowcase.app.settings.SettingsExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.app.wizard.WizardExampleActivity;
 import android.support.v17.leanback.supportleanbackshowcase.cards.presenters.CardPresenterSelector;
@@ -181,6 +182,12 @@ public class MainFragment extends BrowseFragment {
                     intent = new Intent(getActivity().getBaseContext(),
                             DialogExampleActivity.class);
                     break;
+                }
+                case 12: {
+                    intent = new Intent(getActivity().getBaseContext(),
+                            DynamicVideoRowsActivity.class);
+                    startActivity(intent);
+                    return;
                 }
                 default:
                     break;

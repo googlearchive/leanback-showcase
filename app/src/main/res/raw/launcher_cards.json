@@ -85,6 +85,13 @@
         "title": "Dialog Examples",
         "localImageResource": "thumbnail_example_dialog",
         "description": "Showcase of various card design and layouts"
+      },
+      {
+        "id": 12,
+        "type": "DEFAULT",
+        "title": "Row Example",
+        "localImageResource": "thumbnail_example_dialog",
+        "description": "Showcase of how to publish rows from your own app"
       }
     ]
   }
