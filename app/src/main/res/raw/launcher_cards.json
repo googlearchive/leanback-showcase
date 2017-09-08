@@ -92,6 +92,13 @@
         "title": "Row Example",
         "localImageResource": "thumbnail_example_dialog",
         "description": "Showcase of how to publish rows from your own app"
+      },
+      {
+        "id": 13,
+        "type": "DEFAULT",
+        "title": "LiveData Example",
+        "localImageResource": "thumbnail_example_dialog",
+        "description": "live data and room"
       }
     ]
   }

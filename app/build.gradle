@@ -30,10 +30,22 @@ dependencies {
     compile "com.android.support:preference-leanback-v17:+"
     compile "com.android.support:preference-v14:+"
 
-    compile "com.google.code.gson:gson:1.7.2"
+    compile "com.google.code.gson:gson:2.8.1"
     compile "com.android.support:palette-v7:+"
     compile 'com.google.android.exoplayer:exoplayer:r2.2.0'
 
     compile 'com.github.bumptech.glide:glide:4.0.0-RC1'
     compile 'com.android.support:support-tv-provider:+'
+
+    compile 'com.squareup.retrofit2:converter-gson:2.3.0'
+    compile 'com.squareup.retrofit2:retrofit:2.3.0'
+
+    compile "android.arch.lifecycle:runtime:1.0.0-alpha5"
+    compile "android.arch.lifecycle:extensions:1.0.0-alpha5"
+    annotationProcessor "android.arch.lifecycle:compiler:1.0.0-alpha5"
+
+    compile "android.arch.persistence.room:runtime:1.0.0-alpha5"
+    annotationProcessor "android.arch.persistence.room:compiler:1.0.0-alpha5"
+
+    testCompile "android.arch.persistence.room:testing:1.0.0-alpha5"
 }

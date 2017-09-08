@@ -281,4 +281,13 @@
         <item name="android:padding">24dp</item>
     </style>
 
+
+
+
+    <!--The styles for popup menu-->
+    <style name="MyPopupMenu" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:popupBackground">#0F213F</item>
+        <item name="android:disabledAlpha">0.5</item>
+    </style>
+
 </resources>

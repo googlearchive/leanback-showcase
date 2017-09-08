@@ -19,18 +19,16 @@ package android.support.v17.leanback.supportleanbackshowcase.app.rows;
 import android.content.Context;
 import android.content.res.Resources;
 import android.support.v17.leanback.supportleanbackshowcase.R;
-import android.support.v17.leanback.supportleanbackshowcase.app.rows.VideoContent;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v4.content.ContextCompat;
 import android.view.ViewGroup;
-import android.widget.PopupMenu;
 
 import com.bumptech.glide.Glide;
 
 /**
  * A specialized VideoContentCardPresenter to generate Views and bind Objects to them on demand.
- *
+ * <p>
  * It will change background color/ card image accordingly
  */
 public class VideoContentCardPresenter extends Presenter {
