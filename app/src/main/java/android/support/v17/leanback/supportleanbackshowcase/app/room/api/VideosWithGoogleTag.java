@@ -48,6 +48,16 @@ public class VideosWithGoogleTag {
         return mAllResources;
     }
 
+    /**
+     * Helper class for Gson to deserialize the json structure
+     * [{
+     *     "category": "Google+",
+     *     "videos": [{
+     *       "description": "",
+     *          ...
+     *     }]
+     * }]
+     */
     public static class VideosGroupByCategory {
         @SerializedName("category")
         private String mCategory;

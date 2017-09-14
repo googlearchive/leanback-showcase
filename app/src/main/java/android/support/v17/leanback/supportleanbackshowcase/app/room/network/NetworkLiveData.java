@@ -32,6 +32,10 @@ public class NetworkLiveData extends LiveData<Boolean> {
     private static final boolean DEBUG = false;
     private static final String TAG = "NetworkLiveData";
 
+    // The network live data should existed as long as the application is still running
+    // so we use a static variable to represent it.
+    // To make sure there is no memory leakage, when there is no active observer, we will remove
+    // the reference to the callback.
     private static NetworkLiveData sNetworLivekData;
 
     private ConnectivityManager connectivityManager;
@@ -101,6 +105,8 @@ public class NetworkLiveData extends LiveData<Boolean> {
         postConnectivityStatus.execute();
     }
 
+    // The interaction with connectivityManager may block the UI, so it is delegated as a
+    // background task
     private AsyncTask<Void, Void, Void>  postConnectivityStatus= new AsyncTask<Void, Void, Void>() {
         @Override
         protected Void doInBackground(Void... voids) {

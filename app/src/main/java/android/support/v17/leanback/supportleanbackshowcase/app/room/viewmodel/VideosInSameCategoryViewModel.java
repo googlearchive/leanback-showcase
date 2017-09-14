@@ -55,6 +55,12 @@ public class VideosInSameCategoryViewModel extends AndroidViewModel {
      * @return live data
      */
     public LiveData<List<VideoEntity>> getVideosInSameCategory() {
+
+        // The design here is: The view model will talk to repository to fetch the live data.
+        // The data base is created on the main thread (The database creation won't block the UI)
+        // If the database is not prepared (i.e. no valid data existed in the database), it will
+        // return an empty live data automatically, there is no need to declare an empty live data
+        // explicitly
         return mVideosInSameCategory;
     }
 

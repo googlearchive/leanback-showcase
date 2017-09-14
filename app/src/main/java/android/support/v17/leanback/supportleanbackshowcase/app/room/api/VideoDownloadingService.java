@@ -21,6 +21,9 @@ import retrofit2.Callback;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 
+/**
+ * Use retrofit for network request
+ */
 public interface VideoDownloadingService {
     @GET("android_tv_videos_new.json")
     Call<VideosWithGoogleTag> getVideosList();

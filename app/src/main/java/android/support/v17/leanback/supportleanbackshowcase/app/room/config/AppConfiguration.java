@@ -21,6 +21,9 @@ package android.support.v17.leanback.supportleanbackshowcase.app.room.config;
  */
 public class AppConfiguration {
 
+    // used to simulate massive database
+    public static boolean IS_DATABASE_ACCESS_LATENCY_ENABLED = false;
+
     // used to simulate network latency when we firstly need to fetch data using network
     public static boolean IS_NETWORK_LATENCY_ENABLED = false;
 
@@ -29,6 +32,9 @@ public class AppConfiguration {
 
     // used to simulate renting transaction latency
     public static boolean IS_RENTING_OPERATION_DELAY_ENABLED = false;
+
+    // used to simulate network latency when the search operation is performed
+    public static boolean IS_SEARCH_LATENCY_ENABLED = false;
 
     // only use small data set (live_movie_debug.json) for debugging
     public static boolean IS_DEBUGGING_VERSION = false;

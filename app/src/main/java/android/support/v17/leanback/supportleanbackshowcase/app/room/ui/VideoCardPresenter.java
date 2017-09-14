@@ -178,7 +178,6 @@ public class VideoCardPresenter extends Presenter {
 
         @Override
         public boolean onLongClick(View v) {
-            bind(mVideo);
             mPopupMenu.show();
             return true;
         }
@@ -193,6 +192,9 @@ public class VideoCardPresenter extends Presenter {
                         @Override
                         protected Void doInBackground(VideoEntity... videos) {
                             mVideoEntity = videos[0];
+
+                            // View Model will talk to the repository which will be responsible
+                            // for all interaction with room database
                             mViewModel.updateDatabase(mVideoEntity, STATUS, DOWNLOADING);
                             return null;
                         }

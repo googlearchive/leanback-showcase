@@ -77,6 +77,12 @@ public class VideosRepository {
         return sVideosRepository;
     }
 
+    /**
+     * View Model talks to repository through this method to fetch the live data.
+     *
+     * @param category category
+     * @return The list of categories which is wrapped in a live data.
+     */
     public LiveData<List<VideoEntity>> getVideosInSameCategoryLiveData(String category) {
 
         // always try to retrive from local cache firstly
@@ -90,7 +96,6 @@ public class VideosRepository {
 
     public LiveData<List<CategoryEntity>> getAllCategories() {
 
-        // TODO: handle the situation when the categories get updated periodically
         if (mCategories == null) {
             mCategories = mCategoryDao.loadAllCategories();
         }
