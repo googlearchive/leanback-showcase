@@ -20,9 +20,9 @@ package android.support.v17.leanback.supportleanbackshowcase.app.room.ui;
 import android.arch.lifecycle.LifecycleOwner;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.support.annotation.Nullable;
-import android.support.v17.leanback.supportleanbackshowcase.app.room.SampleApplication;
 import android.support.v17.leanback.supportleanbackshowcase.app.room.adapter.ListAdapter;
 import android.support.v17.leanback.supportleanbackshowcase.app.room.db.entity.VideoEntity;
 import android.support.v17.leanback.supportleanbackshowcase.app.room.viewmodel.VideosInSameCategoryViewModel;
@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+
 /**
  * The presenter for live data row
  */
@@ -47,9 +48,12 @@ public class LiveDataRowPresenter extends ListRowPresenter {
     private List<DataLoadedListener> mDataLoadedListeners;
     private LifecycleOwner mLifecycleOwner;
 
-    public LiveDataRowPresenter() {
+    private ViewModelProvider.Factory viewModelFactory;
+
+    public LiveDataRowPresenter(ViewModelProvider.Factory factory) {
         super();
         mDataLoadedListeners = new ArrayList<>();
+        viewModelFactory = factory;
     }
 
     public interface DataLoadedListener {
@@ -82,6 +86,7 @@ public class LiveDataRowPresenter extends ListRowPresenter {
                 listRowPresenterViewHolder.getListRowPresenter());
     }
 
+
     @Override
     protected void onBindRowViewHolder(RowPresenter.ViewHolder holder, Object item) {
         super.onBindRowViewHolder(holder, item);
@@ -97,19 +102,15 @@ public class LiveDataRowPresenter extends ListRowPresenter {
         // In our case, attached activity should be a lifecycle owner
         mLifecycleOwner = (LifecycleOwner) attachedFragmentActivity;
 
-        // each category will have a separate view model
-        VideosInSameCategoryViewModel.Factory factory =
-                new VideosInSameCategoryViewModel.Factory(
-                        SampleApplication.getInstance(), category);
 
         // view model will not be re-created as long as the lifecycle owner
         // lifecycle observer and tag doesn't change
-        VideosInSameCategoryViewModel viewModel = ViewModelProviders.of(attachedFragmentActivity, factory).get(
-                category, VideosInSameCategoryViewModel.class);
+
+        VideosInSameCategoryViewModel viewModel = ViewModelProviders.of(attachedFragmentActivity, viewModelFactory).get(VideosInSameCategoryViewModel.class);
 
 
         // bind live data to view holder
-        vh.setLiveData(viewModel.getVideosInSameCategory());
+        vh.setLiveData(viewModel.getVideosInSameCategory(category));
 
         // observe the live data when this row is bound to view holder
         vh.getLiveData().observe(mLifecycleOwner,

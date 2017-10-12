@@ -43,6 +43,7 @@ public class DetailsDescriptionPresenter extends AbstractDetailsDescriptionPrese
             } else {
                 vh.getSubtitle().setText(videoItem.getStudio());
             }
+
             vh.getBody().setText(videoItem.getDescription());
         }
     }

@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-package android.support.v17.leanback.supportleanbackshowcase.app.room;
+package android.support.v17.leanback.supportleanbackshowcase.app.room.di.adapter.qualifier;
 
-import android.app.Application;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import javax.inject.Qualifier;
 
 /**
- * Customized application class.
+ * Notice that the qualifier can be replaced with the @Name("plain text") easily. But the drawback
+ * for plain text is it is hard for future maintenance.
  */
-public class SampleApplication extends Application {
-    private static SampleApplication sApp;
+@Qualifier
+@Retention(RetentionPolicy.RUNTIME)
+public @interface DetailFragmentArrayObjectAdapterForRowsQualifier {
 
-    // This class will be instantiated once when the application is started, no need to design it
-    // as a singleton on purpose.
-    public static SampleApplication getInstance() {
-        return sApp;
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        sApp = this;
-    }
 }

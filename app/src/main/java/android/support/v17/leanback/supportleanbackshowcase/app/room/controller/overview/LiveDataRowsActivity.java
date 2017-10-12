@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *       http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package android.support.v17.leanback.supportleanbackshowcase.app.room;
+package android.support.v17.leanback.supportleanbackshowcase.app.room.controller.overview;
 
 import android.Manifest;
 import android.app.DownloadManager;
 import android.arch.lifecycle.LifecycleActivity;
-import android.arch.lifecycle.LifecycleRegistry;
-import android.arch.lifecycle.LifecycleRegistryOwner;
-import android.arch.lifecycle.OnLifecycleEvent;
-import android.arch.lifecycle.Lifecycle;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -31,14 +27,19 @@ import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v17.leanback.supportleanbackshowcase.app.room.network.DownloadCompleteBroadcastReceiver;
 import android.support.v17.leanback.supportleanbackshowcase.app.room.network.PermissionLiveData;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
+import dagger.android.AndroidInjection;
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasFragmentInjector;
+import dagger.android.support.HasSupportFragmentInjector;
+import javax.inject.Inject;
 
 /**
  * Extend from LifecycleActivity so this activity can be used as the owner of lifecycle event
  */
-public class LiveDataRowsActivity extends LifecycleActivity {
+public class LiveDataRowsActivity extends LifecycleActivity implements HasSupportFragmentInjector{
 
     private static final int WRITE_PERMISSION = 0;
 
@@ -46,6 +47,7 @@ public class LiveDataRowsActivity extends LifecycleActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_livedata_rows);
@@ -104,4 +106,22 @@ public class LiveDataRowsActivity extends LifecycleActivity {
         super.onDestroy();
         unregisterReceiver(mReceiver);
     }
+
+
+    @Inject
+    DispatchingAndroidInjector<Fragment> dispatchingAndroidInjector;
+
+
+    @Override
+    public AndroidInjector<Fragment> supportFragmentInjector() {
+        return dispatchingAndroidInjector;
+    }
+
+    // @Inject
+    // DispatchingAndroidInjector<Fragment> dispatchingAndroidInjector;
+    //
+    // @Override
+    // public AndroidInjector<Fragment> supportFragmentInjector() {
+    //   return dispatchingAndroidInjector;
+    // }
 }

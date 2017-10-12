@@ -21,17 +21,24 @@
     <string name="implement_search">Implement your own in-app search.</string>
     <string name="card_examples_title">Card Examples</string>
     <string name="channel_publish_title">Channel Publish</string>
-    <string name="livedata">Live Data</string>
-    <string name="detail_view_title">DetailView Example</string>
+    <string name="livedata">Live Data Fragment</string>
+    <string name="detail_view_title">JINGJIANG LI JINGJIANG LI</string>
     <string name="action_cicked">Action clicked. Implement your own handler.</string>
     <string name="grid_example_title">Image Grid Example</string>
     <string name="video_grid_example_title">Video Grid Example</string>
     <string name="videos_url">https://storage.googleapis.com/android-tv/android_tv_videos_new.json</string>
-    <string name="action_play">Play </string>
+    <string name="action_play">JINGJIANG CHANGE PLAY Play </string>
     <string name="action_play_not_ready">The video is still being downloaded. Please wait and try
             later.</string>
     <string name="action_buy">Buy </string>
     <string name="action_rent">Rent </string>
+
+    <string name="livedata_action_play">Play</string>
+    <string name="livedata_actoin_rent">Rent</string>
+    <string name="livedata_rent_price">4.54</string>
+    <string name="livedata_action_preview">Preview</string>
+    <string name="livedata_action_loading">loading</string>
+
     <string name="action_wishlist">Add to wishlist</string>
     <string name="action_related">Related</string>
     <string name="header_related">Related Items</string>

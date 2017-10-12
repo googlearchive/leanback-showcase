@@ -47,6 +47,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
 import java.io.File;
+import javax.inject.Inject;
 
 /**
  * The video card presenter which can respond to long click action and present current video's
@@ -76,6 +77,11 @@ public class VideoCardPresenter extends Presenter {
     private static int sSelectedBackgroundColor = -1;
     private static int sDefaultBackgroundColor = -1;
     private static Drawable sDefaultCardImage;
+
+    @Inject
+    public VideoCardPresenter() {
+
+    }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {

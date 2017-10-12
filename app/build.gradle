@@ -1,51 +1,100 @@
+/*
+ * Copyright 2017, The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 'android-26'
-    buildToolsVersion '26.0.0'
-
+    compileSdkVersion 26
+    buildToolsVersion rootProject.buildToolsVersion
     defaultConfig {
-        applicationId "android.support.v17.leanback.supportleanbackshowcase"
-        minSdkVersion 17
+        applicationId 'com.example.android.persistence'
+        minSdkVersion 21
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
-        multiDexEnabled true
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
+
     buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    dataBinding {
+        enabled = true
+    }
+    productFlavors {
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile "com.android.support:recyclerview-v7:+"
-    compile "com.android.support:leanback-v17:+"
-    compile "com.android.support:appcompat-v7:+"
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.android.support:design:' + rootProject.supportLibVersion
+    compile 'com.android.support:cardview-v7:' + rootProject.supportLibVersion
+    compile 'com.android.support:recyclerview-v7:' + rootProject.supportLibVersion
+    compile 'android.arch.lifecycle:extensions:' + rootProject.archLifecycleVersion
+    compile 'android.arch.persistence.room:runtime:' + rootProject.archRoomVersion
+    annotationProcessor "android.arch.lifecycle:compiler:" + rootProject.archLifecycleVersion
+    annotationProcessor "android.arch.persistence.room:compiler:" + rootProject.archRoomVersion
 
-    compile "com.android.support:preference-v7:+"
-    compile "com.android.support:preference-leanback-v17:+"
-    compile "com.android.support:preference-v14:+"
+    testCompile 'junit:junit:4.12'
+
+    // Testing-only dependencies
+    androidTestCompile 'com.android.support.test:runner:' + rootProject.runnerVersion
+    androidTestCompile 'com.android.support.test:rules:' + rootProject.rulesVersion
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:' + rootProject.espressoVersion
+
+    androidTestCompile 'com.android.support.test.espresso:espresso-contrib:' + rootProject.espressoVersion
+
+    // Force usage of dependencies in the test app, since it is internally used by the runner module.
+    androidTestCompile 'com.android.support:design:' + rootProject.supportLibVersion
+    androidTestCompile 'com.android.support:recyclerview-v7:' + rootProject.supportLibVersion
+
+    compile 'com.android.support:leanback-v17:' + rootProject.supportLibVersion
+    compile 'com.android.support:appcompat-v7:' + rootProject.supportLibVersion
+
+    compile 'com.android.support:preference-v7:'+ rootProject.supportLibVersion
+    compile 'com.android.support:preference-leanback-v17:' + rootProject.supportLibVersion
+    compile 'com.android.support:preference-v14:' + rootProject.supportLibVersion
 
     compile "com.google.code.gson:gson:2.8.1"
-    compile "com.android.support:palette-v7:+"
+    compile "com.android.support:palette-v7:" + rootProject.supportLibVersion
     compile 'com.google.android.exoplayer:exoplayer:r2.2.0'
 
     compile 'com.github.bumptech.glide:glide:4.0.0-RC1'
-    compile 'com.android.support:support-tv-provider:+'
+    compile 'com.android.support:support-tv-provider:' + rootProject.supportLibVersion
 
     compile 'com.squareup.retrofit2:converter-gson:2.3.0'
     compile 'com.squareup.retrofit2:retrofit:2.3.0'
 
-    compile "android.arch.lifecycle:runtime:1.0.0-alpha5"
-    compile "android.arch.lifecycle:extensions:1.0.0-alpha5"
-    annotationProcessor "android.arch.lifecycle:compiler:1.0.0-alpha5"
+    implementation "com.google.dagger:dagger:2.11"
+    implementation "com.google.dagger:dagger-android:2.11"
+    implementation "com.google.dagger:dagger-android-support:2.11"
 
-    compile "android.arch.persistence.room:runtime:1.0.0-alpha5"
-    annotationProcessor "android.arch.persistence.room:compiler:1.0.0-alpha5"
-
-    testCompile "android.arch.persistence.room:testing:1.0.0-alpha5"
+    annotationProcessor "com.google.dagger:dagger-android-processor:2.11"
+    annotationProcessor "com.google.dagger:dagger-compiler:2.11"
 }
+

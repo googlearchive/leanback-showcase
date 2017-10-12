@@ -18,11 +18,9 @@ package android.support.v17.leanback.supportleanbackshowcase.app.room.network;
 
 import android.app.DownloadManager;
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Environment;
-import android.support.v17.leanback.supportleanbackshowcase.app.room.SampleApplication;
+import android.support.v17.leanback.supportleanbackshowcase.app.room.controller.app.SampleApplication;
 import android.support.v17.leanback.supportleanbackshowcase.app.room.db.entity.VideoEntity;
 import android.util.Log;
 

@@ -27,6 +27,7 @@ import android.support.v17.leanback.supportleanbackshowcase.app.room.db.entity.C
 import android.support.v17.leanback.supportleanbackshowcase.app.room.db.entity.VideoEntity;
 
 import java.util.List;
+import javax.inject.Inject;
 
 public class VideosViewModel extends AndroidViewModel {
     // live data connect to database
@@ -42,10 +43,11 @@ public class VideosViewModel extends AndroidViewModel {
 
     private final VideosRepository mRepository;
 
-    public VideosViewModel(Application application) {
+    @Inject
+    public VideosViewModel(Application application, VideosRepository repository) {
         super(application);
 
-        mRepository = VideosRepository.getVideosRepositoryInstance();
+        mRepository = repository;
 
         mAllCategories = mRepository.getAllCategories();
 

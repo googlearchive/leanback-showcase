@@ -27,26 +27,18 @@ import android.support.v17.leanback.supportleanbackshowcase.app.room.db.entity.V
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 public class VideosInSameCategoryViewModel extends AndroidViewModel {
 
-    // The parameter used to create view model
-    private final String mCategory;
-
-    /**
-     * List of VideoEntities in same category
-     */
-    private final LiveData<List<VideoEntity>> mVideosInSameCategory;
-
     // instance of the repository
-    private final VideosRepository mRepository;
+    // TODO not injected into here
+    private VideosRepository mRepository;
 
-
-    public VideosInSameCategoryViewModel(@NonNull Application application, final String category) {
+    @Inject
+    public VideosInSameCategoryViewModel(@NonNull Application application, VideosRepository repository) {
         super(application);
-        mCategory = category;
-        mRepository = VideosRepository.getVideosRepositoryInstance();
-
-        mVideosInSameCategory =mRepository.getVideosInSameCategoryLiveData(mCategory);
+        mRepository = repository;
     }
 
     /**
@@ -54,37 +46,13 @@ public class VideosInSameCategoryViewModel extends AndroidViewModel {
      *
      * @return live data
      */
-    public LiveData<List<VideoEntity>> getVideosInSameCategory() {
+    public LiveData<List<VideoEntity>> getVideosInSameCategory(String category) {
 
         // The design here is: The view model will talk to repository to fetch the live data.
         // The data base is created on the main thread (The database creation won't block the UI)
         // If the database is not prepared (i.e. no valid data existed in the database), it will
         // return an empty live data automatically, there is no need to declare an empty live data
         // explicitly
-        return mVideosInSameCategory;
-    }
-
-    /**
-     * The factory can take category as the parameter to create according view model
-     */
-    public static class Factory extends ViewModelProvider.NewInstanceFactory {
-        @NonNull
-        private final Application mApplication;
-
-        private final String mCategory;
-
-        public Factory(@NonNull Application application, String category) {
-            mApplication = application;
-            mCategory = category;
-        }
-
-        @Override
-        public <T extends ViewModel> T create(Class<T> modelClass) {
-            return (T) new VideosInSameCategoryViewModel(mApplication, mCategory);
-        }
-    }
-
-    public void updateDatabase(VideoEntity video, String category, String value) {
-        mRepository.updateDatabase(video, category, value);
+        return mRepository.getVideosInSameCategoryLiveData(category);
     }
 }

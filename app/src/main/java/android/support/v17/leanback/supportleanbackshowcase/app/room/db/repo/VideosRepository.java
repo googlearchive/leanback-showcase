@@ -22,7 +22,7 @@ import android.arch.persistence.room.Room;
 import android.os.AsyncTask;
 import android.support.annotation.WorkerThread;
 import android.support.v17.leanback.supportleanbackshowcase.R;
-import android.support.v17.leanback.supportleanbackshowcase.app.room.SampleApplication;
+import android.support.v17.leanback.supportleanbackshowcase.app.room.controller.app.SampleApplication;
 import android.support.v17.leanback.supportleanbackshowcase.app.room.api.VideoDownloadingService;
 import android.support.v17.leanback.supportleanbackshowcase.app.room.api.VideosWithGoogleTag;
 import android.support.v17.leanback.supportleanbackshowcase.app.room.config.AppConfiguration;
@@ -41,12 +41,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+@Singleton
 public class VideosRepository {
 
     // For debugging purpose
@@ -147,7 +151,8 @@ public class VideosRepository {
         }
     }
 
-    private VideosRepository() {
+    @Inject
+    public VideosRepository() {
         createAndPopulateDatabase();
         mVideoDao = mDb.videoDao();
         mCategoryDao = mDb.categoryDao();

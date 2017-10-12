@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package android.support.v17.leanback.supportleanbackshowcase.app.room;
+package android.support.v17.leanback.supportleanbackshowcase.app.room.controller.search;
 
 import android.arch.lifecycle.LifecycleActivity;
 import android.arch.lifecycle.LifecycleRegistry;
@@ -22,35 +24,36 @@ import android.os.Bundle;
 import android.support.v17.leanback.app.SearchFragment;
 import android.support.v17.leanback.supportleanbackshowcase.R;
 import android.support.v17.leanback.widget.SpeechRecognitionCallback;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasFragmentInjector;
+import dagger.android.support.HasSupportFragmentInjector;
+import javax.inject.Inject;
 
 /**
  * Extend from LifecycleActivity so this activity can be used as the owner of lifecycle event
  */
-public class SearchActivity extends LifecycleActivity {
+public class SearchActivity extends LifecycleActivity implements HasSupportFragmentInjector{
 
-    // For debugging purpose
     private static final String TAG = "SearchActivity";
     private static final boolean DEBUG = false;
-
-    /**
-     * If using internal speech recognizer, you must have RECORD_AUDIO permission
-     */
-    private static final boolean USE_INTERNAL_SPEECH_RECOGNIZER = true;
+    private static final boolean USE_INTERNAL_SPEECH_RECOGNIZER = false;
     private static final int REQUEST_SPEECH = 1;
-    private SearchFragment mFragment;
-    private SpeechRecognitionCallback mSpeechRecognitionCallback;
 
-    /**
-     * Called when the activity is first created.
-     */
+    // The fragment has to be retrived from the id which is the runtime information
+    public SearchFragment mFragment;
+
+    public SpeechRecognitionCallback mSpeechRecognitionCallback;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.search);
         mFragment = (SearchFragment) getFragmentManager().findFragmentById(R.id.search_fragment);
-        if (!USE_INTERNAL_SPEECH_RECOGNIZER) {
+        if (USE_INTERNAL_SPEECH_RECOGNIZER) {
             mSpeechRecognitionCallback = new SpeechRecognitionCallback() {
                 @Override
                 public void recognizeSpeech() {
@@ -80,4 +83,11 @@ public class SearchActivity extends LifecycleActivity {
         }
     }
 
+    @Inject
+    DispatchingAndroidInjector<Fragment> dispatchingAndroidInjector;
+
+    @Override
+    public AndroidInjector<Fragment> supportFragmentInjector() {
+        return dispatchingAndroidInjector;
+    }
 }

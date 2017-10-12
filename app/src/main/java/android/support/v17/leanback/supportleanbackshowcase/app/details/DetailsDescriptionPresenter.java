@@ -24,6 +24,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import javax.inject.Inject;
 
 /**
  * This presenter is used to render a {@link DetailedCard} in the {@link
@@ -34,6 +35,7 @@ public class DetailsDescriptionPresenter extends Presenter {
     private ResourceCache mResourceCache = new ResourceCache();
     private Context mContext;
 
+    @Inject
     public DetailsDescriptionPresenter(Context context) {
         mContext = context;
     }
