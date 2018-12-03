@@ -18,6 +18,8 @@ package android.support.v17.leanback.supportleanbackshowcase.models;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
+import java.util.List;
+
 import android.support.v17.leanback.supportleanbackshowcase.R;
 
 /**
@@ -26,7 +28,7 @@ import android.support.v17.leanback.supportleanbackshowcase.R;
  */
 public class VideoCard extends Card {
 
-    @SerializedName("sources") private String mVideoSource = "";
+    @SerializedName("sources") private List<String> mVideoSources = null;
     @SerializedName("background") private String mBackgroundUrl = "";
     @SerializedName("studio") private String mStudio = "";
 
@@ -35,12 +37,12 @@ public class VideoCard extends Card {
         setType(Type.VIDEO_GRID);
     }
 
-    public String getVideoSource() {
-        return mVideoSource;
+    public List<String> getVideoSources() {
+        return mVideoSources;
     }
 
-    public void setVideoSource(String sources) {
-        mVideoSource = sources;
+    public void setVideoSources(List<String> sources) {
+        mVideoSources = sources;
     }
 
     public String getBackground() {
