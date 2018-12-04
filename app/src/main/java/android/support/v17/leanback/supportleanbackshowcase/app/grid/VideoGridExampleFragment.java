@@ -220,8 +220,13 @@ public class VideoGridExampleFragment extends VerticalGridFragment implements
                               RowPresenter.ViewHolder rowViewHolder, Row row) {
         if (item instanceof  VideoCard) {
             VideoCard itemCard = (VideoCard) item;
+            List<String> videoSources = itemCard.getVideoSources();
+            if (videoSources == null || videoSources.isEmpty()) {
+                return;
+            }
+
             MediaMetaData metaData = new MediaMetaData();
-            metaData.setMediaSourcePath(itemCard.getVideoSource());
+            metaData.setMediaSourcePath(videoSources.get(0));
             metaData.setMediaTitle(itemCard.getTitle());
             metaData.setMediaArtistName(itemCard.getDescription());
             metaData.setMediaAlbumArtUrl(itemCard.getImageUrl());
